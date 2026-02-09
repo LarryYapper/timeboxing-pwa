@@ -134,6 +134,16 @@
                     <div class="form-group">
                         <label>Kategorie</label>
                         <div class="category-picker" id="category-picker">
+                            <button type="button" class="category-btn" data-category="focus"
+                                style="--cat-color: var(--color-task-focus)">Focus</button>
+                            <button type="button" class="category-btn" data-category="admin"
+                                style="--cat-color: var(--color-task-admin)">Admin</button>
+                            <button type="button" class="category-btn" data-category="creative"
+                                style="--cat-color: var(--color-task-creative)">Creative</button>
+                            <button type="button" class="category-btn" data-category="other"
+                                style="--cat-color: var(--color-task-other)">Jiné</button>
+
+                            <!-- Routine categories hidden or secondary if desired, but keeping all for now -->
                             <button type="button" class="category-btn" data-category="routine"
                                 style="--cat-color: var(--color-routine)">Rutina</button>
                             <button type="button" class="category-btn" data-category="meal"
@@ -146,8 +156,6 @@
                                 style="--cat-color: var(--color-relax)">Relax</button>
                             <button type="button" class="category-btn" data-category="sleep"
                                 style="--cat-color: var(--color-sleep)">Spánek</button>
-                            <button type="button" class="category-btn" data-category="calendar"
-                                style="--cat-color: var(--color-calendar)">Kalendář</button>
                         </div>
                     </div>
                     <div class="form-group">

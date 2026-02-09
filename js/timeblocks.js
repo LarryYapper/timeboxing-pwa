@@ -195,9 +195,14 @@ const TimeBlocks = (function () {
             'recharge': '#feceb9',
             'relax': '#cce4e1',
             'work': '#FFF3CD',
-            'calendar': '#CE93D8'
+            'calendar': '#CE93D8',
+            // User task colors
+            'focus': '#e76f51',
+            'admin': '#8da399',
+            'creative': '#64748b',
+            'other': '#d4c5a9'
         };
-        return colors[category] || '#9E9E9E';
+        return colors[category] || '#d4c5a9'; // Default to 'other' color
     }
 
     /**

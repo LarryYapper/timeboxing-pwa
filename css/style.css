@@ -2,6 +2,36 @@
    TIMEBOXING PWA - DESIGN SYSTEM
    ==================================== */
 
+/* Font Imports */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=swap');
+
+@font-face {
+    font-family: 'Apfel Grotezk';
+    src: url('fonts/ApfelGrotezk-Regular.woff2') format('woff2'),
+        url('fonts/ApfelGrotezk-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Apfel Grotezk';
+    src: url('fonts/ApfelGrotezk-Mittel.woff2') format('woff2'),
+        url('fonts/ApfelGrotezk-Mittel.woff') format('woff');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Apfel Grotezk';
+    src: url('fonts/ApfelGrotezk-Fett.woff2') format('woff2'),
+        url('fonts/ApfelGrotezk-Fett.woff') format('woff');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* CSS Custom Properties */
 :root {
     /* Colors - Brand (Brown palette) */
@@ -28,6 +58,16 @@
     /* Cream - Práce */
     --color-calendar: #CE93D8;
 
+    /* New User Task Colors */
+    --color-task-focus: #e76f51;
+    /* Terracotta */
+    --color-task-admin: #8da399;
+    /* Sage */
+    --color-task-creative: #64748b;
+    /* Slate */
+    --color-task-other: #d4c5a9;
+    /* Sand */
+
     /* Colors - UI (Brown palette) */
     --color-bg: #1a1510;
     --color-bg-secondary: #2a2218;
@@ -41,7 +81,8 @@
     --color-success: #22c55e;
 
     /* Typography */
-    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-family: 'Apfel Grotezk', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-family-serif: 'Fraunces', serif;
     --font-size-xs: 0.75rem;
     --font-size-sm: 0.875rem;
     --font-size-base: 1rem;
@@ -480,6 +521,13 @@ body {
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
+}
+
+/* Routine specific styling */
+.time-block-content.is-routine .block-title {
+    font-family: var(--font-family-serif);
+    font-style: italic;
+    font-weight: 600;
 }
 
 .time-block-content:hover {
