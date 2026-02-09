@@ -156,46 +156,43 @@ body {
     margin-bottom: var(--spacing-sm);
 }
 
-.header-top {
+.header-compact {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-sm);
+    gap: var(--spacing-md);
+    padding: var(--spacing-xs) 0;
 }
 
-.logo {
-    font-size: var(--font-size-xl);
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
+/* Removed duplicate logo and header-actions styles */
 
-.date-section {
+.date-compact {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
-}
-
-.date-display {
-    text-align: center;
-    min-width: 180px;
+    gap: var(--spacing-xs);
 }
 
 .date-text {
-    display: block;
-    font-size: var(--font-size-lg);
     font-weight: 600;
+    font-size: var(--font-size-md);
+    white-space: nowrap;
+    min-width: 140px;
+    text-align: center;
 }
 
-.year-text {
-    display: block;
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
 }
+
+.btn-sm {
+    padding: var(--spacing-xs);
+    min-height: 32px;
+    min-width: 32px;
+}
+
+/* Old header styles removed */
 
 .quote {
     display: none;

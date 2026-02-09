@@ -21,6 +21,7 @@
         googleSigninBtn: document.getElementById('google-signin-btn'),
         smartInput: document.getElementById('smart-input'),
         addBlockBtn: document.getElementById('add-block-btn'),
+        headerAddBlockBtn: document.getElementById('add-block-btn-header'),
         inputFeedback: document.getElementById('input-feedback'),
         timegrid: document.getElementById('timegrid'),
         blockModal: document.getElementById('block-modal'),
@@ -133,6 +134,9 @@
             }
         });
         elements.addBlockBtn.addEventListener('click', addBlockFromInput);
+        if (elements.headerAddBlockBtn) {
+            elements.headerAddBlockBtn.addEventListener('click', () => openModal());
+        }
 
         // Block events
         document.addEventListener('blockMoved', handleBlockMoved);
