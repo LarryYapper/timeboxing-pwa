@@ -144,19 +144,43 @@ const Calendar = (function () {
             const timeMin = new Date(date + 'T00:00:00').toISOString();
             const timeMax = new Date(date + 'T23:59:59').toISOString();
 
-            const response = await gapi.client.calendar.events.list({
-                calendarId: 'primary',
-                timeMin: timeMin,
-                timeMax: timeMax,
-                singleEvents: true,
-                orderBy: 'startTime',
+            // 1. Get list of all calendars
+            const calendarListResponse = await gapi.client.calendar.calendarList.list({
+                minAccessRole: 'reader'
+            });
+            const calendars = calendarListResponse.result.items || [];
+
+            // 2. Fetch events for each calendar in parallel
+            const eventPromises = calendars.map(async (calendar) => {
+                try {
+                    const response = await gapi.client.calendar.events.list({
+                        calendarId: calendar.id,
+                        timeMin: timeMin,
+                        timeMax: timeMax,
+                        singleEvents: true,
+                        orderBy: 'startTime',
+                    });
+
+                    if (!response.result.items) return [];
+
+                    return response.result.items.map(event => ({
+                        ...event,
+                        calendarId: calendar.id,
+                        calendarSummary: calendar.summary,
+                        backgroundColor: calendar.backgroundColor
+                    }));
+                } catch (e) {
+                    console.warn(`Could not fetch events for calendar ${calendar.summary}:`, e);
+                    return [];
+                }
             });
 
-            const events = response.result.items || [];
+            const results = await Promise.all(eventPromises);
+            const allEvents = results.flat();
 
-            // Convert to our block format
-            return events
-                .filter(event => event.start.dateTime) // Only timed events, not all-day
+            // 3. Convert to our block format
+            return allEvents
+                .filter(event => event.start && event.start.dateTime) // Only timed events
                 .map(event => ({
                     id: `gcal_${event.id}`,
                     title: event.summary || 'Bez názvu',
@@ -166,8 +190,11 @@ const Calendar = (function () {
                     fromCalendar: true,
                     calendarEventId: event.id,
                     description: event.description || '',
-                    location: event.location || ''
+                    location: event.location || '',
+                    calendarName: event.calendarSummary
+                    // We could use event.backgroundColor here if we wanted multi-colored calendar blocks
                 }));
+
         } catch (error) {
             console.error('Error fetching calendar events:', error);
 
