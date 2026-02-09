@@ -70,6 +70,7 @@ const TimeBlocks = (function () {
         if (block.isRoutine) classes += ' is-routine';
         el.className = classes;
         el.dataset.blockId = block.id;
+        el.style.backgroundColor = getCategoryColor(block.category);
 
         // Show title and notes if available
         const notesHtml = block.notes ? `<span class="block-notes">${escapeHtml(block.notes)}</span>` : '';
@@ -78,7 +79,10 @@ const TimeBlocks = (function () {
             ${notesHtml}
         `;
 
-        el.addEventListener('click', () => handleBlockClick(block.id));
+        el.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent bubbling
+            handleBlockClick(block.id);
+        });
 
         return el;
     }
@@ -114,56 +118,67 @@ const TimeBlocks = (function () {
     /**
      * Place a block into the appropriate grid cells
      */
+    /**
+     * Place a block into the appropriate grid cells
+     */
     function placeBlockInCells(block) {
         const startPos = getTimePosition(block.startTime);
         const endPos = getTimePosition(block.endTime);
 
         let currentHour = startPos.hour;
-        let currentSlot = startPos.slot;
-        let isFirst = true;
 
-        // Iterate through each 15-minute slot the block covers
-        while (currentHour < endPos.hour || (currentHour === endPos.hour && currentSlot < endPos.slot)) {
+        // Loop through each hour the block touches
+        while (currentHour <= endPos.hour) {
             if (currentHour > GRID_END_HOUR) break;
 
-            // Find the row for this hour
-            const row = gridElement.querySelector(`[data-hour="${currentHour}"]`);
-            if (row) {
-                // Get the slot cell (slots are 0-3, cells are after the time label)
-                const slotCells = row.querySelectorAll('.time-slot');
-                const cell = slotCells[currentSlot];
+            // Determine start and end slots for this specific hour row
+            let startSlot = (currentHour === startPos.hour) ? startPos.slot : 0;
+            let endSlot = (currentHour === endPos.hour) ? endPos.slot : SLOTS_PER_HOUR;
 
-                if (cell) {
-                    cell.classList.add('has-block');
-                    cell.dataset.blockId = block.id;
-                    cell.dataset.category = block.category;
-                    cell.style.backgroundColor = getCategoryColor(block.category);
+            // If block ends exactly at the start of an hour (e.g. 8:00), don't render on 8:00 row
+            if (currentHour === endPos.hour && endPos.slot === 0) {
+                break;
+            }
 
-                    // Determine position in block
-                    const isLast = (currentHour === endPos.hour - 1 && currentSlot === 3) ||
-                        (currentHour === endPos.hour && currentSlot === endPos.slot - 1) ||
-                        (currentHour === GRID_END_HOUR && currentSlot === 3);
+            const durationInSlots = endSlot - startSlot;
+            if (durationInSlots > 0) {
+                const row = gridElement.querySelector(`[data-hour="${currentHour}"]`);
+                if (row) {
+                    const slotCells = row.querySelectorAll('.time-slot');
+                    const firstCell = slotCells[startSlot];
 
-                    if (isFirst) {
-                        cell.classList.add('block-start');
-                        // Add title to first cell
-                        const content = createBlockContent(block, getBlockSlotCount(block));
-                        cell.appendChild(content);
-                        isFirst = false;
-                    } else if (isLast) {
-                        cell.classList.add('block-end');
-                    } else {
-                        cell.classList.add('block-middle');
+                    if (firstCell) {
+                        // Create content for this segment
+                        const content = createBlockContent(block, durationInSlots);
+
+                        // Calculate width: (100% * slots) + (pixels for borders)
+                        // defined in CSS: --grid-time-width is for label, but slots are flex/percentage
+                        // We use percentage width: 100% of a slot * number of slots
+                        // But we need to account for the borders between slots if we want pixel perfection
+                        // Simpler approach: style.width = (durationInSlots * 100) + '%'
+                        // And we make the content position:absolute overlapping everything
+
+                        content.style.width = `calc(${durationInSlots * 100}% + ${durationInSlots - 1}px)`;
+
+                        // Mark the first cell and append content
+                        firstCell.classList.add('has-block', 'block-start');
+                        firstCell.appendChild(content);
+
+                        // Mark subsequent cells in this row as occupied (for future drag/drop logic)
+                        for (let i = startSlot; i < endSlot; i++) {
+                            if (slotCells[i]) {
+                                slotCells[i].classList.add('has-block');
+                                slotCells[i].dataset.blockId = block.id;
+                                slotCells[i].dataset.category = block.category;
+                                // We DO NOT set background color on the cell anymore, 
+                                // it's on the content element
+                            }
+                        }
                     }
                 }
             }
 
-            // Move to next slot
-            currentSlot++;
-            if (currentSlot >= SLOTS_PER_HOUR) {
-                currentSlot = 0;
-                currentHour++;
-            }
+            currentHour++;
         }
     }
 

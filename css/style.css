@@ -445,6 +445,8 @@ body {
     bottom: 0;
     width: 1px;
     background: var(--color-border);
+    z-index: 1;
+    /* Ensure grid lines are below content */
 }
 
 /* ====================================
@@ -457,22 +459,34 @@ body {
     position: relative;
 }
 
-/* Block content inside cell */
+/* Block content inside cell - REFACTORED for seamless spanning */
 .time-block-content {
-    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
     height: 100%;
-    min-height: var(--grid-hour-height);
+    /* width is set via JS */
+    z-index: 10;
+
     display: flex;
     align-items: center;
     justify-content: flex-start;
     padding: var(--spacing-xs) var(--spacing-sm);
     cursor: pointer;
-    transition: opacity var(--transition-fast);
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
     box-sizing: border-box;
+
+    /* Visuals */
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
 }
 
 .time-block-content:hover {
-    opacity: 0.85;
+    opacity: 0.95;
+    transform: scale(1.02);
+    z-index: 20;
+    box-shadow: var(--shadow-md);
 }
 
 .block-title {
@@ -481,6 +495,7 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-right: var(--spacing-xs);
 }
 
 .block-notes {
