@@ -57,7 +57,7 @@
     --spacing-xl: 2rem;
 
     /* Grid */
-    --grid-hour-height: 60px;
+    --grid-hour-height: 44px;
     --grid-slot-height: 15px;
     /* 15 minutes = 1/4 of hour */
     --grid-time-width: 50px;
@@ -153,14 +153,14 @@ body {
    ==================================== */
 
 .header {
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
 }
 
 .header-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
 }
 
 .logo {
@@ -198,14 +198,7 @@ body {
 }
 
 .quote {
-    text-align: center;
-    font-style: italic;
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-sm);
-    padding: var(--spacing-md);
-    background: var(--color-bg-secondary);
-    border-radius: var(--radius-md);
-    border-left: 3px solid var(--color-primary);
+    display: none;
 }
 
 .quote cite {

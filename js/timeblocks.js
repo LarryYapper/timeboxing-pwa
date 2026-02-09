@@ -4,7 +4,7 @@
  */
 
 const TimeBlocks = (function () {
-    const GRID_START_HOUR = 6;
+    const GRID_START_HOUR = 7;
     const GRID_END_HOUR = 23;
     const SLOTS_PER_HOUR = 4; // 15-minute slots
     const TOTAL_SLOTS = (GRID_END_HOUR - GRID_START_HOUR + 1) * SLOTS_PER_HOUR;

@@ -226,8 +226,16 @@
 
         try {
             await loadDate(currentDate);
+            // Check if we found any events
+            const eventCount = calendarBlocks.length;
+            if (eventCount > 0) {
+                alert(`Synchronizace dokončena. Nalezeno ${eventCount} událostí.`);
+            } else {
+                alert('Synchronizace dokončena, ale pro tento den nebyly nalezeny žádné události.');
+            }
         } catch (error) {
             console.error('Sync failed:', error);
+            alert('Synchronizace selhala. Zkuste se odhlásit a znovu přihlásit.');
         } finally {
             // Keep spinning a bit longer for visual feedback
             setTimeout(() => {
