@@ -289,6 +289,8 @@ body {
 
 .smart-input-container {
     margin-bottom: var(--spacing-lg);
+    display: none;
+    /* Hidden by default */
 }
 
 .smart-input-wrapper {

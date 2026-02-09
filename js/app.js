@@ -135,7 +135,7 @@
         });
         elements.addBlockBtn.addEventListener('click', addBlockFromInput);
         if (elements.headerAddBlockBtn) {
-            elements.headerAddBlockBtn.addEventListener('click', () => openModal());
+            elements.headerAddBlockBtn.addEventListener('click', toggleSmartInput);
         }
 
         // Block events
@@ -297,10 +297,26 @@
      * Update the date display
      */
     function updateDateDisplay() {
-        const options = { weekday: 'long', day: 'numeric', month: 'long' };
-        const dateStr = currentDate.toLocaleDateString('cs-CZ', options);
-        elements.currentDate.textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
-        elements.currentYear.textContent = currentDate.getFullYear();
+        // Simple compact date: "Po 12. 1."
+        const options = { weekday: 'short', day: 'numeric', month: 'numeric' };
+        // Year is optional in compact view
+        elements.currentDate.textContent = currentDate.toLocaleDateString('cs-CZ', options);
+        if (elements.currentYear) {
+            elements.currentYear.textContent = currentDate.getFullYear();
+        }
+    }
+
+    /**
+     * Toggle smart input visibility
+     */
+    function toggleSmartInput() {
+        const container = document.querySelector('.smart-input-container');
+        if (getComputedStyle(container).display === 'none') {
+            container.style.display = 'block';
+            elements.smartInput.focus();
+        } else {
+            container.style.display = 'none';
+        }
     }
 
     /**
