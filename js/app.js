@@ -32,6 +32,7 @@
         blockNotes: document.getElementById('block-notes'),
         deleteBlockBtn: document.getElementById('delete-block-btn'),
         cancelModalBtn: document.getElementById('cancel-modal-btn'),
+        syncCalendarBtn: document.getElementById('sync-calendar-btn'),
     };
 
     /**
@@ -122,6 +123,7 @@
 
         // Google sign in
         elements.googleSigninBtn.addEventListener('click', handleGoogleSignIn);
+        elements.syncCalendarBtn.addEventListener('click', handleSyncCalendar);
 
         // Smart input
         elements.smartInput.addEventListener('input', handleSmartInputChange);
@@ -186,6 +188,7 @@
 
             // Reload current date to fetch calendar events
             loadDate(currentDate);
+            elements.syncCalendarBtn.hidden = false;
         } else {
             btn.innerHTML = `
                 <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
@@ -197,6 +200,7 @@
                 <span>Přihlásit se</span>
             `;
             btn.classList.remove('connected');
+            elements.syncCalendarBtn.hidden = true;
         }
     }
 
@@ -208,6 +212,27 @@
             Calendar.signOut();
         } else {
             Calendar.signIn();
+        }
+    }
+
+    /**
+     * Handle manual calendar sync
+     */
+    async function handleSyncCalendar() {
+        if (!Calendar.getSignedInStatus()) return;
+
+        const btn = elements.syncCalendarBtn;
+        btn.classList.add('rotating');
+
+        try {
+            await loadDate(currentDate);
+        } catch (error) {
+            console.error('Sync failed:', error);
+        } finally {
+            // Keep spinning a bit longer for visual feedback
+            setTimeout(() => {
+                btn.classList.remove('rotating');
+            }, 500);
         }
     }
 
