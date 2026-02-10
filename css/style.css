@@ -610,7 +610,7 @@ body {
     align-items: center;
     padding: 0 var(--spacing-xs);
     box-sizing: border-box;
-    overflow: hidden;
+    overflow: visible;
     cursor: pointer;
     transition: opacity var(--transition-fast);
 }
@@ -641,9 +641,9 @@ body {
 .time-block-fill.from-calendar {
     background-image: repeating-linear-gradient(-45deg,
             transparent,
-            transparent 4px,
-            rgba(255, 255, 255, 0.4) 4px,
-            rgba(255, 255, 255, 0.4) 10px) !important;
+            transparent 3px,
+            rgba(255, 255, 255, 0.4) 3px,
+            rgba(255, 255, 255, 0.4) 6px) !important;
     color: white !important;
 }
 
