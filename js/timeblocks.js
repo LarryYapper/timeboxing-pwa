@@ -224,6 +224,11 @@ const TimeBlocks = (function () {
                 fill.style.backgroundColor = block.fromCalendar && block._calColor
                     ? block._calColor
                     : getCategoryColor(block.category);
+                fill.style.color = block.fromCalendar ? '#fff' : getTextColorForCategory(block.category);
+                if (block.fromCalendar) {
+                    fill.style.fontFamily = "'Apfel Grotezk', sans-serif";
+                    fill.style.fontWeight = '700';
+                }
                 fill.dataset.blockId = block.id;
 
                 // Lane positioning for overlaps
@@ -477,7 +482,7 @@ const TimeBlocks = (function () {
     }
 
     function getTextColorForCategory(category) {
-        const darkTextCategories = ['meal', 'recharge', 'relax', 'work', 'sleep', 'energy'];
+        const darkTextCategories = ['routine', 'meal', 'recharge', 'relax', 'work', 'sleep', 'energy'];
         return darkTextCategories.includes(category) ? '#333' : '#fff';
     }
 
