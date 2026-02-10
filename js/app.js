@@ -401,8 +401,10 @@
         calendarBlocks = await Calendar.getEventsForDate(dateStr);
 
         // Filter out routines that overlap with calendar events (calendar takes priority)
-        // But KEEP routines that overlap with user tasks - lane system handles that
+        // Also filter out routines hidden by user for this day
+        const hiddenRoutineIds = getHiddenRoutines(dateStr);
         const filteredRoutines = routineBlocks.filter(routine => {
+            if (hiddenRoutineIds.includes(routine.id)) return false;
             const overlapsCalendar = calendarBlocks.some(cal => {
                 return cal.startTime < routine.endTime && cal.endTime > routine.startTime;
             });
@@ -571,10 +573,10 @@
             btn.classList.toggle('selected', btn.dataset.category === block.category);
         });
 
-        // Hide delete button for calendar events
+        // Hide delete button for calendar events only
         elements.deleteBlockBtn.style.display = block.fromCalendar ? 'none' : 'block';
 
-        // Disable form for calendar events
+        // Disable form for calendar events only
         const isCalendarEvent = block.fromCalendar;
         elements.blockTitle.disabled = isCalendarEvent;
         elements.blockStart.disabled = isCalendarEvent;
@@ -606,7 +608,32 @@
             return;
         }
 
-        // Update block
+        if (block.isRoutine) {
+            // For routines: hide the original, create a new local block with changes
+            hideRoutine(formatDateStr(currentDate), block.id);
+
+            const newBlock = {
+                id: Storage.generateId(),
+                date: formatDateStr(currentDate),
+                title: elements.blockTitle.value,
+                startTime: elements.blockStart.value,
+                endTime: elements.blockEnd.value,
+                notes: elements.blockNotes.value,
+                category: block.category,
+                fromCalendar: false
+            };
+            const selectedCategory = elements.categoryPicker.querySelector('.category-btn.selected');
+            if (selectedCategory) newBlock.category = selectedCategory.dataset.category;
+
+            await Storage.saveBlock(newBlock);
+            localBlocks.push(newBlock);
+            await loadDate(currentDate);
+            triggerAutoSave();
+            closeModal();
+            return;
+        }
+
+        // Update regular block
         block.title = elements.blockTitle.value;
         block.startTime = elements.blockStart.value;
         block.endTime = elements.blockEnd.value;
@@ -619,7 +646,7 @@
 
         await Storage.saveBlock(block);
         renderBlocks();
-        triggerAutoSave(); // Sync to Drive
+        triggerAutoSave();
         closeModal();
     }
 
@@ -633,15 +660,41 @@
             return;
         }
 
+        if (block.isRoutine) {
+            // Hide routine for this day
+            hideRoutine(formatDateStr(currentDate), block.id);
+            await loadDate(currentDate);
+            closeModal();
+            return;
+        }
+
         await Storage.deleteBlock(block.id);
-
-        // Remove from arrays
         localBlocks = localBlocks.filter(b => b.id !== block.id);
-        blocks = [...routineBlocks, ...localBlocks, ...calendarBlocks];
-
-        renderBlocks();
-        triggerAutoSave(); // Sync to Drive
+        await loadDate(currentDate);
+        triggerAutoSave();
         closeModal();
+    }
+
+    /**
+     * Get hidden routine IDs for a date
+     */
+    function getHiddenRoutines(dateStr) {
+        try {
+            return JSON.parse(localStorage.getItem('hiddenRoutines_' + dateStr) || '[]');
+        } catch {
+            return [];
+        }
+    }
+
+    /**
+     * Hide a routine for a specific date
+     */
+    function hideRoutine(dateStr, routineId) {
+        const hidden = getHiddenRoutines(dateStr);
+        if (!hidden.includes(routineId)) {
+            hidden.push(routineId);
+            localStorage.setItem('hiddenRoutines_' + dateStr, JSON.stringify(hidden));
+        }
     }
 
     /**
