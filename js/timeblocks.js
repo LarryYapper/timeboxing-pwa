@@ -15,6 +15,16 @@ const TimeBlocks = (function () {
     // Google Calendar logo colors
     const CALENDAR_COLORS = ['#4285F4', '#EA4335', '#FBBC05', '#34A853'];
 
+    // User Task Palette
+    const TASK_PALETTE = [
+        '#B22B3A', // Focus (Red)
+        '#11326B', // Admin (Blue)
+        '#326663', // Creative (Teal)
+        '#724431', // Other (Brown)
+        '#090909', // Deep Work (Black)
+        '#F39242'  // Energy (Orange)
+    ];
+
     /**
      * Initialize the time blocks system
      */
@@ -221,10 +231,16 @@ const TimeBlocks = (function () {
                 fill.className = 'time-block-fill';
                 if (block.fromCalendar) fill.classList.add('from-calendar');
                 if (block.isRoutine) fill.classList.add('is-routine');
-                fill.style.backgroundColor = block.fromCalendar && block._calColor
-                    ? block._calColor
-                    : getCategoryColor(block.category);
-                fill.style.color = block.fromCalendar ? '#fff' : getTextColorForCategory(block.category);
+                // Set colors
+                let bgColor;
+                if (block.fromCalendar) {
+                    bgColor = block.backgroundColor || block._calColor || '#588AEE';
+                } else {
+                    bgColor = getBlockBackgroundColor(block);
+                }
+
+                fill.style.backgroundColor = bgColor;
+                fill.style.color = block.fromCalendar ? '#fff' : getTextColorForCategory(block.category, bgColor);
                 if (block.fromCalendar) {
                     fill.style.fontFamily = "'Space Grotesk', sans-serif";
                     fill.style.fontWeight = '700';
@@ -482,9 +498,33 @@ const TimeBlocks = (function () {
         return null;
     }
 
-    function getTextColorForCategory(category) {
-        const darkTextCategories = ['meal', 'recharge', 'relax', 'work', 'sleep', 'energy'];
-        return darkTextCategories.includes(category) ? '#333' : '#fff';
+    function getBlockBackgroundColor(block) {
+        // If explicit custom color is set, use it
+        if (block.customColor) {
+            return block.customColor;
+        }
+
+        // For 'work' category (default tasks), assign a deterministic random color
+        // based on the ID if no custom color is set
+        if (block.category === 'work') {
+            const hash = block.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            return TASK_PALETTE[hash % TASK_PALETTE.length];
+        }
+
+        // Otherwise use standard category color
+        return getCategoryColor(block.category);
+    }
+
+    function getTextColorForCategory(category, bgColor) {
+        // Energy (Orange) needs dark text for readability
+        if (bgColor === '#F39242' || category === 'energy') return '#1a1a1a';
+
+        // Other palette colors (Red, Blue, Teal, Brown, Black) are dark -> use white text
+        if (TASK_PALETTE.includes(bgColor)) return '#ffffff';
+
+        // Standard categories
+        const darkTextCategories = ['meal', 'recharge', 'relax', 'work', 'energy', 'sleep'];
+        return darkTextCategories.includes(category) ? '#1a1a1a' : '#ffffff';
     }
 
     /**

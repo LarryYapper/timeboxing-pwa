@@ -11,6 +11,16 @@
     let calendarBlocks = [];
     let editingBlockId = null;
 
+    // User Task Palette
+    const TASK_PALETTE = [
+        '#B22B3A', // Focus (Red)
+        '#11326B', // Admin (Blue)
+        '#326663', // Creative (Teal)
+        '#724431', // Other (Brown)
+        '#090909', // Deep Work (Black)
+        '#F39242'  // Energy (Orange)
+    ];
+
     // DOM Elements
     const elements = {
         currentDate: document.getElementById('current-date'),
@@ -519,7 +529,9 @@
             startTime: parsed.startTime,
             endTime: parsed.endTime,
             category: parsed.category,
-            fromCalendar: false
+            fromCalendar: false,
+            // Assign random color for tasks (work category)
+            customColor: parsed.category === 'work' ? TASK_PALETTE[Math.floor(Math.random() * TASK_PALETTE.length)] : null
         };
 
         await Storage.saveBlock(block);
