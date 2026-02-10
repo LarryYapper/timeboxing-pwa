@@ -109,8 +109,10 @@ const TimeBlocks = (function () {
             slot.style.backgroundColor = '';
         });
 
-        // Sort: routines/calendar first, then user tasks, then by start time
-        // This ensures user tasks render on top of routines when overlapping
+        // Compute overlap lanes before rendering
+        const lanes = computeOverlapLanes(blocks);
+
+        // Sort: routines/calendar first, then user tasks
         const sortedBlocks = [...blocks].sort((a, b) => {
             const aWeight = (a.isRoutine || a.fromCalendar) ? 0 : 1;
             const bWeight = (b.isRoutine || b.fromCalendar) ? 0 : 1;
@@ -118,40 +120,41 @@ const TimeBlocks = (function () {
             return a.startTime.localeCompare(b.startTime);
         });
 
-        // Place each block into its cells
+        // Place each block with lane info
         sortedBlocks.forEach(block => {
-            placeBlockInCells(block);
+            placeBlockInCells(block, lanes[block.id]);
         });
-
-        // Handle overlapping blocks (stack them vertically)
-        handleOverlaps();
     }
 
     /**
-     * Handle overlapping blocks - stack them vertically in shared cells
+     * Compute overlap lanes at the time level.
+     * Routines/calendar get lane 0 (top), user tasks get lane 1 (bottom).
      */
-    function handleOverlaps() {
-        if (!gridElement) return;
-        const allSlots = gridElement.querySelectorAll('.time-slot');
-        allSlots.forEach(slot => {
-            const contents = slot.querySelectorAll('.time-block-content');
-            if (contents.length > 1) {
-                const heightPer = 100 / contents.length;
-                contents.forEach((content, i) => {
-                    content.style.height = heightPer + '%';
-                    content.style.top = (i * heightPer) + '%';
-                });
+    function computeOverlapLanes(blocks) {
+        const lanes = {};
+        for (const block of blocks) {
+            const overlapping = blocks.filter(b =>
+                b.id !== block.id &&
+                b.startTime < block.endTime &&
+                b.endTime > block.startTime
+            );
+            if (overlapping.length === 0) {
+                lanes[block.id] = { lane: 0, totalLanes: 1 };
+            } else {
+                const isBackground = block.isRoutine || block.fromCalendar;
+                lanes[block.id] = {
+                    lane: isBackground ? 0 : 1,
+                    totalLanes: 2
+                };
             }
-        });
+        }
+        return lanes;
     }
 
     /**
      * Place a block into the appropriate grid cells
      */
-    /**
-     * Place a block into the appropriate grid cells
-     */
-    function placeBlockInCells(block) {
+    function placeBlockInCells(block, laneInfo) {
         const startPos = getTimePosition(block.startTime);
         const endPos = getTimePosition(block.endTime);
 
@@ -189,6 +192,13 @@ const TimeBlocks = (function () {
                         // And we make the content position:absolute overlapping everything
 
                         content.style.width = `calc(${durationInSlots * 100}% + ${durationInSlots - 1}px)`;
+
+                        // Apply lane height/position for overlapping blocks
+                        if (laneInfo && laneInfo.totalLanes > 1) {
+                            const heightPer = 100 / laneInfo.totalLanes;
+                            content.style.height = heightPer + '%';
+                            content.style.top = (laneInfo.lane * heightPer) + '%';
+                        }
 
                         // Mark the first cell and append content
                         firstCell.classList.add('has-block', 'block-start');
@@ -386,11 +396,15 @@ const TimeBlocks = (function () {
             if (el.classList.contains('time-slot')) {
                 return el;
             }
-            // If we hit a row, find the closest slot
+            // If we hit a block content element, find its parent slot
+            if (el.classList.contains('time-block-content')) {
+                const slot = el.closest('.time-slot');
+                if (slot) return slot;
+            }
+            // If we hit a row, find the closest slot by x position
             if (el.classList.contains('timegrid-row')) {
                 const slots = el.querySelectorAll('.time-slot');
                 if (slots.length > 0) {
-                    // Find the slot closest to x
                     let closest = slots[0];
                     let closestDist = Infinity;
                     slots.forEach(s => {
