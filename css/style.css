@@ -4,6 +4,7 @@
 
 /* Font Imports */
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @font-face {
     font-family: 'Apfel Grotezk';
@@ -495,6 +496,7 @@ body {
     border-bottom: 1px solid var(--color-border);
     position: relative;
     vertical-align: top;
+    overflow: visible;
 }
 
 .time-slot:last-child {

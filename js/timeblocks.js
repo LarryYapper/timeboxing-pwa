@@ -226,7 +226,7 @@ const TimeBlocks = (function () {
                     : getCategoryColor(block.category);
                 fill.style.color = block.fromCalendar ? '#fff' : getTextColorForCategory(block.category);
                 if (block.fromCalendar) {
-                    fill.style.fontFamily = "'Apfel Grotezk', sans-serif";
+                    fill.style.fontFamily = "'Space Grotesk', sans-serif";
                     fill.style.fontWeight = '700';
                 }
                 fill.dataset.blockId = block.id;
