@@ -12,6 +12,9 @@ const TimeBlocks = (function () {
     let gridElement = null;
     let currentBlocks = [];
 
+    // Google Calendar logo colors
+    const CALENDAR_COLORS = ['#4285F4', '#EA4335', '#FBBC05', '#34A853'];
+
     /**
      * Initialize the time blocks system
      */
@@ -77,6 +80,9 @@ const TimeBlocks = (function () {
             slot.style.backgroundColor = '';
         });
 
+        // Assign Google Calendar colors to calendar events
+        assignCalendarColors(blocks);
+
         // Compute overlap lanes before rendering
         const lanes = computeOverlapLanes(blocks);
 
@@ -91,6 +97,31 @@ const TimeBlocks = (function () {
         // Place each block with lane info
         sortedBlocks.forEach(block => {
             placeBlockInCells(block, lanes[block.id]);
+        });
+    }
+
+    /**
+     * Assign Google Calendar colors to calendar events.
+     * Events sorted by start time; each gets a color different from its neighbor.
+     */
+    function assignCalendarColors(blocks) {
+        const calEvents = blocks
+            .filter(b => b.fromCalendar)
+            .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+        let lastColor = null;
+        calEvents.forEach(block => {
+            // Pick from colors, skipping the last used one
+            const available = CALENDAR_COLORS.filter(c => c !== lastColor);
+            // Use a simple hash of the block id to pick deterministically
+            let hash = 0;
+            for (let i = 0; i < block.id.length; i++) {
+                hash = ((hash << 5) - hash) + block.id.charCodeAt(i);
+                hash |= 0;
+            }
+            const color = available[Math.abs(hash) % available.length];
+            block._calColor = color;
+            lastColor = color;
         });
     }
 
@@ -183,7 +214,9 @@ const TimeBlocks = (function () {
                 fill.className = 'time-block-fill';
                 if (block.fromCalendar) fill.classList.add('from-calendar');
                 if (block.isRoutine) fill.classList.add('is-routine');
-                fill.style.backgroundColor = getCategoryColor(block.category);
+                fill.style.backgroundColor = block.fromCalendar && block._calColor
+                    ? block._calColor
+                    : getCategoryColor(block.category);
                 fill.dataset.blockId = block.id;
 
                 // Lane positioning for overlaps
