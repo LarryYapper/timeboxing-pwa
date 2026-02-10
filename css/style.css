@@ -327,7 +327,7 @@ body {
 .btn-google {
     background: white;
     color: #333;
-    border: 2px solid var(--color-border);
+    border: 2px solid #666;
     min-width: 40px;
     min-height: 40px;
 }
