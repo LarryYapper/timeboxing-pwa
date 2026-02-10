@@ -102,26 +102,33 @@ const TimeBlocks = (function () {
 
     /**
      * Assign Google Calendar colors to calendar events.
-     * Events sorted by start time; each gets a color different from its neighbor.
+     * Uses graph-coloring: each event gets a color different from all touching/overlapping events.
      */
     function assignCalendarColors(blocks) {
         const calEvents = blocks
             .filter(b => b.fromCalendar)
             .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-        let lastColor = null;
-        calEvents.forEach(block => {
-            // Pick from colors, skipping the last used one
-            const available = CALENDAR_COLORS.filter(c => c !== lastColor);
-            // Use a simple hash of the block id to pick deterministically
-            let hash = 0;
-            for (let i = 0; i < block.id.length; i++) {
-                hash = ((hash << 5) - hash) + block.id.charCodeAt(i);
-                hash |= 0;
+        // Assign colors one by one, checking all already-colored neighbors
+        calEvents.forEach((block, idx) => {
+            // Find all calendar events that touch or overlap this one
+            // (touch = endTime of one equals startTime of another)
+            const neighborColors = [];
+            for (let j = 0; j < idx; j++) {
+                const other = calEvents[j];
+                if (other._calColor && other.endTime >= block.startTime && other.startTime <= block.endTime) {
+                    neighborColors.push(other._calColor);
+                }
             }
-            const color = available[Math.abs(hash) % available.length];
-            block._calColor = color;
-            lastColor = color;
+
+            // Pick a color not used by any neighbor
+            const available = CALENDAR_COLORS.filter(c => !neighborColors.includes(c));
+            if (available.length > 0) {
+                block._calColor = available[idx % available.length];
+            } else {
+                // All colors taken by neighbors, pick least used
+                block._calColor = CALENDAR_COLORS[idx % CALENDAR_COLORS.length];
+            }
         });
     }
 
