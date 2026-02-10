@@ -109,14 +109,39 @@ const TimeBlocks = (function () {
             slot.style.backgroundColor = '';
         });
 
-        // Sort blocks by start time
+        // Sort: routines/calendar first, then user tasks, then by start time
+        // This ensures user tasks render on top of routines when overlapping
         const sortedBlocks = [...blocks].sort((a, b) => {
+            const aWeight = (a.isRoutine || a.fromCalendar) ? 0 : 1;
+            const bWeight = (b.isRoutine || b.fromCalendar) ? 0 : 1;
+            if (aWeight !== bWeight) return aWeight - bWeight;
             return a.startTime.localeCompare(b.startTime);
         });
 
         // Place each block into its cells
         sortedBlocks.forEach(block => {
             placeBlockInCells(block);
+        });
+
+        // Handle overlapping blocks (stack them vertically)
+        handleOverlaps();
+    }
+
+    /**
+     * Handle overlapping blocks - stack them vertically in shared cells
+     */
+    function handleOverlaps() {
+        if (!gridElement) return;
+        const allSlots = gridElement.querySelectorAll('.time-slot');
+        allSlots.forEach(slot => {
+            const contents = slot.querySelectorAll('.time-block-content');
+            if (contents.length > 1) {
+                const heightPer = 100 / contents.length;
+                contents.forEach((content, i) => {
+                    content.style.height = heightPer + '%';
+                    content.style.top = (i * heightPer) + '%';
+                });
+            }
         });
     }
 

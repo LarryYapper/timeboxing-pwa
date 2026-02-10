@@ -953,6 +953,7 @@ body {
     opacity: 0.5;
     z-index: 100;
     cursor: grabbing;
+    pointer-events: none;
 }
 
 .drag-ghost {
