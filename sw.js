@@ -3,20 +3,20 @@
  * Provides offline functionality and caching
  */
 
-const CACHE_NAME = 'timeboxing-v21';
+const CACHE_NAME = 'timeboxing-v22';
 const STATIC_ASSETS = [
-    '/',
-    '/index.html',
-    '/css/style.css?v=21',
-    '/js/app.js?v=21',
-    '/js/calendar.js?v=21',
-    '/js/storage.js?v=21',
-    '/js/routines.js?v=21',
-    '/js/smartinput.js?v=21',
-    '/js/timeblocks.js?v=21',
-    '/manifest.json',
-    '/icons/icon-192.svg',
-    '/icons/icon-512.svg'
+    './',
+    './index.html',
+    './css/style.css?v=21',
+    './js/app.js?v=21',
+    './js/calendar.js?v=21',
+    './js/storage.js?v=21',
+    './js/routines.js?v=21',
+    './js/smartinput.js?v=21',
+    './js/timeblocks.js?v=21',
+    './manifest.json',
+    './icons/icon-192.svg',
+    './icons/icon-512.svg'
 ];
 
 // Install event - cache static assets
@@ -67,7 +67,7 @@ self.addEventListener('fetch', (event) => {
     if (request.mode === 'navigate') {
         event.respondWith(
             fetch(request)
-                .catch(() => caches.match('/index.html'))
+                .catch(() => caches.match('./index.html'))
         );
         return;
     }
