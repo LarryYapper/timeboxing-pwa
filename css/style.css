@@ -96,7 +96,7 @@
     --spacing-xl: 2rem;
 
     /* Grid */
-    --grid-hour-height: 44px;
+    --grid-hour-height: 40px;
     --grid-slot-height: 15px;
     /* 15 minutes = 1/4 of hour */
     --grid-time-width: 50px;
@@ -207,7 +207,7 @@ body {
    ==================================== */
 
 .header {
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: 2px;
 }
 
 .header-compact {
@@ -215,7 +215,7 @@ body {
     justify-content: space-between;
     align-items: center;
     gap: var(--spacing-xs);
-    padding: var(--spacing-xs) 0;
+    padding: 0;
 }
 
 .logo {
@@ -249,9 +249,9 @@ body {
 }
 
 .btn-sm {
-    padding: var(--spacing-xs);
-    min-height: 32px;
-    min-width: 32px;
+    padding: 2px;
+    min-height: 28px;
+    min-width: 28px;
 }
 
 /* Old header styles removed */
