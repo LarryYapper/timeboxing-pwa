@@ -573,51 +573,8 @@ body {
     padding: 0;
 }
 
-/* Block Categories - apply to cells */
-.time-slot[data-category="routine"] {
-    background: var(--color-routine) !important;
-    color: white;
-}
-
-.time-slot[data-category="routine-evening"] {
-    background: var(--color-routine-evening) !important;
-    color: white;
-}
-
-.time-slot[data-category="routine-night"] {
-    background: var(--color-routine-night) !important;
-    color: white;
-}
-
-.time-slot[data-category="meal"] {
-    background: var(--color-meal) !important;
-    color: #333;
-}
-
-.time-slot[data-category="work"] {
-    background: var(--color-work) !important;
-    color: #333;
-}
-
-.time-slot[data-category="recharge"] {
-    background: var(--color-recharge) !important;
-    color: #333;
-}
-
-.time-slot[data-category="relax"] {
-    background: var(--color-relax) !important;
-    color: #333;
-}
-
-.time-slot[data-category="sleep"] {
-    background: var(--color-sleep) !important;
-    color: #333;
-}
-
-.time-slot[data-category="calendar"] {
-    background: var(--color-calendar) !important;
-    color: #333;
-}
+/* Block category colors are on .time-block-content elements (inline styles).
+   Cell-level backgrounds removed to prevent overlap stacking issues. */
 
 /* Routine indicator */
 .time-block-content.is-routine::after {
