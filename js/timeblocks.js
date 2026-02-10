@@ -196,18 +196,20 @@ const TimeBlocks = (function () {
             'routine': '#e44033',
             'routine-evening': '#59875e',
             'routine-night': '#316feb',
-            'meal': '#ffe599',
+            'meal': '#fec93d',
             'recharge': '#feceb9',
             'relax': '#cce4e1',
             'work': '#FFF3CD',
-            'calendar': '#CE93D8',
+            'calendar': '#5C6BC0',
             // User task colors
-            'focus': '#e76f51',
-            'admin': '#8da399',
-            'creative': '#64748b',
-            'other': '#d4c5a9'
+            'focus': '#B22B3A',
+            'admin': '#11326B',
+            'creative': '#326663',
+            'other': '#724431',
+            'deepwork': '#090909',
+            'energy': '#F39242'
         };
-        return colors[category] || '#d4c5a9'; // Default to 'other' color
+        return colors[category] || '#724431'; // Default to 'other' color
     }
 
     /**
@@ -385,7 +387,7 @@ const TimeBlocks = (function () {
      * Get text color for a category (dark or light text)
      */
     function getTextColorForCategory(category) {
-        const darkTextCategories = ['meal', 'recharge', 'relax', 'work', 'sleep', 'admin', 'other'];
+        const darkTextCategories = ['meal', 'recharge', 'relax', 'work', 'sleep', 'energy'];
         return darkTextCategories.includes(category) ? '#333' : '#fff';
     }
 

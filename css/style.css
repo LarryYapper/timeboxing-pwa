@@ -44,8 +44,8 @@
     /* Yellow - Spánek */
     --color-routine: #e44033;
     /* Red - Ranní rutina */
-    --color-meal: #ffe599;
-    /* Light yellow - Jídlo */
+    --color-meal: #fec93d;
+    /* Same as sleep */
     --color-recharge: #feceb9;
     /* Peach - Recharge */
     --color-routine-evening: #59875e;
@@ -56,17 +56,15 @@
     /* Light teal - Relax */
     --color-work: #FFF3CD;
     /* Cream - Práce */
-    --color-calendar: #CE93D8;
+    --color-calendar: #5C6BC0;
 
-    /* New User Task Colors */
-    --color-task-focus: #e76f51;
-    /* Terracotta */
-    --color-task-admin: #8da399;
-    /* Sage */
-    --color-task-creative: #64748b;
-    /* Slate */
-    --color-task-other: #d4c5a9;
-    /* Sand */
+    /* User Task Colors */
+    --color-task-focus: #B22B3A;
+    --color-task-admin: #11326B;
+    --color-task-creative: #326663;
+    --color-task-other: #724431;
+    --color-task-deepwork: #090909;
+    --color-task-energy: #F39242;
 
     /* Colors - UI (Brown palette) */
     --color-bg: #1a1510;
@@ -630,6 +628,14 @@ body {
 }
 
 /* Calendar indicator */
+.time-block-content.from-calendar {
+    background-image: repeating-linear-gradient(-45deg,
+            transparent,
+            transparent 4px,
+            rgba(255, 255, 255, 0.15) 4px,
+            rgba(255, 255, 255, 0.15) 8px) !important;
+}
+
 .time-block-content.from-calendar::after {
     content: '📅';
     margin-left: auto;
