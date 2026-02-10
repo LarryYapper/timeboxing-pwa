@@ -565,10 +565,9 @@ body {
 
 .block-title {
     font-size: var(--font-size-sm);
-    font-weight: 600;
+    font-weight: 700;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
     margin-right: var(--spacing-xs);
 }
 
