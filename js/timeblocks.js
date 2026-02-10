@@ -1,6 +1,6 @@
 /**
  * timeblocks.js - Interactive time blocks for table grid layout
- * Blocks are placed inside table cells, spanning multiple cells as needed
+ * Blocks are placed inside table cells using per-cell fills (no cross-cell overflow)
  */
 
 const TimeBlocks = (function () {
@@ -58,38 +58,6 @@ const TimeBlocks = (function () {
             hour: hours,
             slot: Math.floor(minutes / 15) // 0-3
         };
-    }
-
-    /**
-     * Create block content element
-     */
-    function createBlockContent(block, slotCount) {
-        const el = document.createElement('div');
-        let classes = `time-block-content ${block.category}`;
-        if (block.fromCalendar) classes += ' from-calendar';
-        if (block.isRoutine) classes += ' is-routine';
-        el.className = classes;
-        el.dataset.blockId = block.id;
-        el.style.backgroundColor = getCategoryColor(block.category);
-
-        // Show title and notes if available
-        const notesHtml = block.notes ? `<span class="block-notes">${escapeHtml(block.notes)}</span>` : '';
-        el.innerHTML = `
-            <span class="block-title">${escapeHtml(block.title)}</span>
-            ${notesHtml}
-        `;
-
-        el.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent bubbling
-            handleBlockClick(block.id);
-        });
-
-        // Make user-created blocks (not routines, not calendar) draggable
-        if (!block.isRoutine && !block.fromCalendar) {
-            makeDraggable(el, block);
-        }
-
-        return el;
     }
 
     /**
@@ -152,70 +120,70 @@ const TimeBlocks = (function () {
     }
 
     /**
-     * Place a block into the appropriate grid cells
+     * Place a block into grid cells using per-cell fills.
+     * Each cell gets its own fill div - NO cross-cell overflow.
      */
     function placeBlockInCells(block, laneInfo) {
         const startPos = getTimePosition(block.startTime);
         const endPos = getTimePosition(block.endTime);
-
         let currentHour = startPos.hour;
+        let isFirstCell = true;
 
-        // Loop through each hour the block touches
         while (currentHour <= endPos.hour) {
             if (currentHour > GRID_END_HOUR) break;
 
-            // Determine start and end slots for this specific hour row
             let startSlot = (currentHour === startPos.hour) ? startPos.slot : 0;
             let endSlot = (currentHour === endPos.hour) ? endPos.slot : SLOTS_PER_HOUR;
 
-            // If block ends exactly at the start of an hour (e.g. 8:00), don't render on 8:00 row
-            if (currentHour === endPos.hour && endPos.slot === 0) {
-                break;
-            }
+            if (currentHour === endPos.hour && endPos.slot === 0) break;
 
-            const durationInSlots = endSlot - startSlot;
-            if (durationInSlots > 0) {
-                const row = gridElement.querySelector(`[data-hour="${currentHour}"]`);
-                if (row) {
-                    const slotCells = row.querySelectorAll('.time-slot');
-                    const firstCell = slotCells[startSlot];
+            const row = gridElement.querySelector(`[data-hour="${currentHour}"]`);
+            if (!row) { currentHour++; continue; }
 
-                    if (firstCell) {
-                        // Create content for this segment
-                        const content = createBlockContent(block, durationInSlots);
+            const slotCells = row.querySelectorAll('.time-slot');
 
-                        // Calculate width: (100% * slots) + (pixels for borders)
-                        // defined in CSS: --grid-time-width is for label, but slots are flex/percentage
-                        // We use percentage width: 100% of a slot * number of slots
-                        // But we need to account for the borders between slots if we want pixel perfection
-                        // Simpler approach: style.width = (durationInSlots * 100) + '%'
-                        // And we make the content position:absolute overlapping everything
+            for (let i = startSlot; i < endSlot; i++) {
+                const cell = slotCells[i];
+                if (!cell) continue;
 
-                        content.style.width = `calc(${durationInSlots * 100}% + ${durationInSlots - 1}px)`;
+                cell.classList.add('has-block');
+                cell.dataset.blockId = block.id;
+                cell.dataset.category = block.category;
 
-                        // Apply lane height/position for overlapping blocks
-                        if (laneInfo && laneInfo.totalLanes > 1) {
-                            const heightPer = 100 / laneInfo.totalLanes;
-                            content.style.height = heightPer + '%';
-                            content.style.top = (laneInfo.lane * heightPer) + '%';
-                        }
+                // Create a fill element for THIS cell
+                const fill = document.createElement('div');
+                fill.className = 'time-block-fill';
+                if (block.fromCalendar) fill.classList.add('from-calendar');
+                if (block.isRoutine) fill.classList.add('is-routine');
+                fill.style.backgroundColor = getCategoryColor(block.category);
+                fill.dataset.blockId = block.id;
 
-                        // Mark the first cell and append content
-                        firstCell.classList.add('has-block', 'block-start');
-                        firstCell.appendChild(content);
-
-                        // Mark subsequent cells in this row as occupied (for future drag/drop logic)
-                        for (let i = startSlot; i < endSlot; i++) {
-                            if (slotCells[i]) {
-                                slotCells[i].classList.add('has-block');
-                                slotCells[i].dataset.blockId = block.id;
-                                slotCells[i].dataset.category = block.category;
-                                // We DO NOT set background color on the cell anymore, 
-                                // it's on the content element
-                            }
-                        }
-                    }
+                // Lane positioning for overlaps
+                if (laneInfo && laneInfo.totalLanes > 1) {
+                    const heightPer = 100 / laneInfo.totalLanes;
+                    fill.style.height = heightPer + '%';
+                    fill.style.top = (laneInfo.lane * heightPer) + '%';
                 }
+
+                // Show title only on the first cell
+                if (isFirstCell) {
+                    const notesHtml = block.notes ? `<span class="block-notes">${escapeHtml(block.notes)}</span>` : '';
+                    fill.innerHTML = `<span class="block-title">${escapeHtml(block.title)}</span>${notesHtml}`;
+                    isFirstCell = false;
+                }
+
+                // Click handler
+                fill.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    handleBlockClick(block.id);
+                });
+
+                // Draggable for user tasks only
+                if (!block.isRoutine && !block.fromCalendar) {
+                    makeDraggable(fill, block);
+                }
+
+                cell.appendChild(fill);
             }
 
             currentHour++;
@@ -244,7 +212,7 @@ const TimeBlocks = (function () {
             'deepwork': '#090909',
             'energy': '#F39242'
         };
-        return colors[category] || '#724431'; // Default to 'other' color
+        return colors[category] || '#724431';
     }
 
     /**
@@ -270,36 +238,28 @@ const TimeBlocks = (function () {
     // DRAG AND DROP
     // ====================================
 
-    let dragState = null; // { blockId, block, ghost, originSlot, startX, startY, slotCount }
+    let dragState = null;
 
-    /**
-     * Make a block element draggable (pointer events)
-     */
     function makeDraggable(el, block) {
         el.classList.add('draggable');
         el.addEventListener('pointerdown', (e) => onDragStart(e, block, el));
     }
 
     function onDragStart(e, block, el) {
-        // Only primary button (touch or left click)
         if (e.button !== 0) return;
 
-        // Small threshold so clicks don't accidentally drag
         const startX = e.clientX;
         const startY = e.clientY;
         let hasMoved = false;
-
         const slotCount = getBlockSlotCount(block);
 
         const onMove = (moveEvent) => {
             const dx = moveEvent.clientX - startX;
             const dy = moveEvent.clientY - startY;
-
             if (!hasMoved && Math.abs(dx) + Math.abs(dy) < 10) return;
 
             if (!hasMoved) {
                 hasMoved = true;
-                // Create ghost
                 const ghost = document.createElement('div');
                 ghost.className = 'drag-ghost';
                 ghost.textContent = block.title;
@@ -309,7 +269,10 @@ const TimeBlocks = (function () {
                 ghost.style.height = el.offsetHeight + 'px';
                 document.body.appendChild(ghost);
 
-                el.classList.add('dragging');
+                // Mark ALL fills for this block as dragging
+                document.querySelectorAll(`.time-block-fill[data-block-id="${block.id}"]`).forEach(f => {
+                    f.classList.add('dragging');
+                });
 
                 dragState = {
                     blockId: block.id,
@@ -320,13 +283,11 @@ const TimeBlocks = (function () {
                 };
             }
 
-            // Move ghost
             if (dragState && dragState.ghost) {
                 dragState.ghost.style.left = moveEvent.clientX - 40 + 'px';
                 dragState.ghost.style.top = moveEvent.clientY - 15 + 'px';
             }
 
-            // Highlight target slot
             highlightDropTarget(moveEvent.clientX, moveEvent.clientY);
         };
 
@@ -335,34 +296,30 @@ const TimeBlocks = (function () {
             document.removeEventListener('pointerup', onUp);
 
             if (hasMoved && dragState) {
-                // Find drop target
                 const targetSlot = getSlotAtPosition(upEvent.clientX, upEvent.clientY);
                 if (targetSlot) {
                     const newTime = targetSlot.dataset.time;
                     if (newTime && newTime !== block.startTime) {
-                        // Calculate new end time
                         const newStartIdx = timeToSlotIndex(newTime);
                         const newEndIdx = newStartIdx + dragState.slotCount;
-                        const maxIdx = TOTAL_SLOTS;
 
-                        if (newEndIdx <= maxIdx && newStartIdx >= 0) {
+                        if (newEndIdx <= TOTAL_SLOTS && newStartIdx >= 0) {
                             const newEndTime = slotIndexToTime(newEndIdx);
-
-                            // Dispatch move event
-                            const event = new CustomEvent('blockMoved', {
+                            document.dispatchEvent(new CustomEvent('blockMoved', {
                                 detail: {
                                     blockId: block.id,
                                     startTime: newTime,
                                     endTime: newEndTime
                                 }
-                            });
-                            document.dispatchEvent(event);
+                            }));
                         }
                     }
                 }
 
                 // Cleanup
-                dragState.element.classList.remove('dragging');
+                document.querySelectorAll(`.time-block-fill[data-block-id="${block.id}"]`).forEach(f => {
+                    f.classList.remove('dragging');
+                });
                 if (dragState.ghost) dragState.ghost.remove();
                 clearDragHighlights();
                 dragState = null;
@@ -371,8 +328,6 @@ const TimeBlocks = (function () {
 
         document.addEventListener('pointermove', onMove);
         document.addEventListener('pointerup', onUp);
-
-        // Prevent default to avoid text selection on touch
         e.preventDefault();
     }
 
@@ -390,18 +345,15 @@ const TimeBlocks = (function () {
     }
 
     function getSlotAtPosition(x, y) {
-        // Use elementsFromPoint to find the slot under the cursor
         const elements = document.elementsFromPoint(x, y);
         for (const el of elements) {
             if (el.classList.contains('time-slot')) {
                 return el;
             }
-            // If we hit a block content element, find its parent slot
-            if (el.classList.contains('time-block-content')) {
+            if (el.classList.contains('time-block-fill')) {
                 const slot = el.closest('.time-slot');
                 if (slot) return slot;
             }
-            // If we hit a row, find the closest slot by x position
             if (el.classList.contains('timegrid-row')) {
                 const slots = el.querySelectorAll('.time-slot');
                 if (slots.length > 0) {
@@ -422,9 +374,6 @@ const TimeBlocks = (function () {
         return null;
     }
 
-    /**
-     * Get text color for a category (dark or light text)
-     */
     function getTextColorForCategory(category) {
         const darkTextCategories = ['meal', 'recharge', 'relax', 'work', 'sleep', 'energy'];
         return darkTextCategories.includes(category) ? '#333' : '#fff';
@@ -436,7 +385,7 @@ const TimeBlocks = (function () {
     function timeToPosition(timeStr) {
         const [hours, minutes] = timeStr.split(':').map(Number);
         const totalMinutes = (hours - GRID_START_HOUR) * 60 + minutes;
-        return totalMinutes; // 1 pixel per minute = 60px per hour
+        return totalMinutes;
     }
 
     // Public API

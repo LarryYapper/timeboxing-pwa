@@ -34,6 +34,7 @@
         deleteBlockBtn: document.getElementById('delete-block-btn'),
         cancelModalBtn: document.getElementById('cancel-modal-btn'),
         syncCalendarBtn: document.getElementById('sync-calendar-btn'),
+        themeToggle: document.getElementById('theme-toggle'),
     };
 
     /**
@@ -49,6 +50,9 @@
         // Initialize time blocks system - pass the grid element directly
         TimeBlocks.init(elements.timegrid);
 
+        // Initialize theme
+        initTheme();
+
         // Set up event listeners
         setupEventListeners();
 
@@ -61,6 +65,39 @@
         // Update current time indicator
         updateCurrentTimeIndicator();
         setInterval(updateCurrentTimeIndicator, 60000); // Update every minute
+    }
+
+    /**
+     * Initialize dark/light theme toggle
+     */
+    function initTheme() {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'light') {
+            document.body.classList.add('light-mode');
+            document.body.classList.remove('dark-mode');
+            if (elements.themeToggle) elements.themeToggle.textContent = '☀️';
+        } else if (saved === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.body.classList.remove('light-mode');
+            if (elements.themeToggle) elements.themeToggle.textContent = '🌙';
+        }
+
+        if (elements.themeToggle) {
+            elements.themeToggle.addEventListener('click', () => {
+                const isLight = document.body.classList.contains('light-mode');
+                if (isLight) {
+                    document.body.classList.remove('light-mode');
+                    document.body.classList.add('dark-mode');
+                    localStorage.setItem('theme', 'dark');
+                    elements.themeToggle.textContent = '🌙';
+                } else {
+                    document.body.classList.add('light-mode');
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('theme', 'light');
+                    elements.themeToggle.textContent = '☀️';
+                }
+            });
+        }
     }
 
     /**
