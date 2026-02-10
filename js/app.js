@@ -400,22 +400,8 @@
         // Load calendar events
         calendarBlocks = await Calendar.getEventsForDate(dateStr);
 
-        // Filter out routine blocks that overlap with local blocks OR calendar events
-        // (calendar events have highest priority, then local blocks, then routines)
-        const filteredRoutines = routineBlocks.filter(routine => {
-            // Check if any local block overlaps with this routine
-            const overlapsLocal = localBlocks.some(local => {
-                return local.startTime < routine.endTime && local.endTime > routine.startTime;
-            });
-            // Check if any calendar event overlaps with this routine
-            const overlapsCalendar = calendarBlocks.some(cal => {
-                return cal.startTime < routine.endTime && cal.endTime > routine.startTime;
-            });
-            return !overlapsLocal && !overlapsCalendar;
-        });
-
-        // Combine: filtered routines first (lowest priority), then local, then calendar (highest)
-        blocks = [...filteredRoutines, ...localBlocks, ...calendarBlocks];
+        // Combine all blocks - overlap lane system in TimeBlocks handles visual stacking
+        blocks = [...routineBlocks, ...localBlocks, ...calendarBlocks];
         renderBlocks();
     }
 
