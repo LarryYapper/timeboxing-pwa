@@ -183,8 +183,8 @@ const TimeBlocks = (function () {
                     handleBlockClick(block.id);
                 });
 
-                // Draggable for user tasks only
-                if (!block.isRoutine && !block.fromCalendar) {
+                // Draggable for user tasks and routines (not calendar events)
+                if (!block.fromCalendar) {
                     makeDraggable(fill, block);
                 }
 

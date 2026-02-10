@@ -534,15 +534,36 @@
 
         // Find the block
         const block = blocks.find(b => b.id === blockId);
-        if (!block || block.fromCalendar) return; // Don't save calendar blocks
+        if (!block || block.fromCalendar) return;
 
-        // Update the block
+        if (block.isRoutine) {
+            // Hide original routine, create local copy at new time
+            hideRoutine(formatDateStr(currentDate), block.id);
+
+            const newBlock = {
+                id: Storage.generateId(),
+                date: formatDateStr(currentDate),
+                title: block.title,
+                startTime: startTime,
+                endTime: endTime,
+                category: block.category,
+                notes: block.notes || '',
+                fromCalendar: false
+            };
+            await Storage.saveBlock(newBlock);
+            localBlocks.push(newBlock);
+            await loadDate(currentDate);
+            triggerAutoSave();
+            return;
+        }
+
+        // Regular block - just update
         block.startTime = startTime;
         block.endTime = endTime;
 
         await Storage.saveBlock(block);
-        await loadDate(currentDate); // Re-render grid
-        triggerAutoSave(); // Sync to Drive
+        await loadDate(currentDate);
+        triggerAutoSave();
     }
 
     /**
