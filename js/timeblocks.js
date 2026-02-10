@@ -200,7 +200,7 @@ const TimeBlocks = (function () {
             'recharge': '#feceb9',
             'relax': '#cce4e1',
             'work': '#FFF3CD',
-            'calendar': '#5C6BC0',
+            'calendar': '#588AEE',
             // User task colors
             'focus': '#B22B3A',
             'admin': '#11326B',
