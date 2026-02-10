@@ -312,12 +312,14 @@ body {
 .btn-google {
     background: white;
     color: #333;
-    border: 1px solid #ddd;
+    border: 2px solid var(--color-border);
+    min-width: 40px;
+    min-height: 40px;
 }
 
 .btn-google:hover {
     background: #f5f5f5;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
 }
 
 .google-icon {
@@ -398,6 +400,7 @@ body {
     width: 100%;
     min-width: 500px;
     border-collapse: collapse;
+    padding-bottom: 60px;
 }
 
 /* Header row with time markers */
@@ -782,6 +785,14 @@ body {
 @media (max-width: 600px) {
     .app-container {
         padding: var(--spacing-sm);
+        padding-bottom: var(--spacing-xl);
+        min-height: auto;
+    }
+
+    .timegrid-container {
+        flex: none;
+        max-height: none;
+        overflow-y: visible;
     }
 
     .header-top {
@@ -905,4 +916,52 @@ body {
 
 .rotating svg {
     animation: rotate 1s linear infinite;
+}
+
+/* Google button text fallback */
+.google-btn-text {
+    font-weight: 700;
+    font-size: var(--font-size-sm);
+    color: #333;
+}
+
+/* ====================================
+   DRAG AND DROP
+   ==================================== */
+
+.time-block-content.draggable {
+    cursor: grab;
+    touch-action: none;
+}
+
+.time-block-content.draggable:active {
+    cursor: grabbing;
+}
+
+.time-block-content.dragging {
+    opacity: 0.5;
+    z-index: 100;
+    cursor: grabbing;
+}
+
+.drag-ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.85;
+    transform: scale(1.05);
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.time-slot.drag-over {
+    outline: 2px dashed var(--color-primary) !important;
+    outline-offset: -2px;
+    background: rgba(166, 124, 82, 0.15) !important;
 }

@@ -507,6 +507,8 @@
         block.endTime = endTime;
 
         await Storage.saveBlock(block);
+        await loadDate(currentDate); // Re-render grid
+        triggerAutoSave(); // Sync to Drive
     }
 
     /**

@@ -84,6 +84,11 @@ const TimeBlocks = (function () {
             handleBlockClick(block.id);
         });
 
+        // Make user-created blocks (not routines, not calendar) draggable
+        if (!block.isRoutine && !block.fromCalendar) {
+            makeDraggable(el, block);
+        }
+
         return el;
     }
 
@@ -222,6 +227,166 @@ const TimeBlocks = (function () {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // ====================================
+    // DRAG AND DROP
+    // ====================================
+
+    let dragState = null; // { blockId, block, ghost, originSlot, startX, startY, slotCount }
+
+    /**
+     * Make a block element draggable (pointer events)
+     */
+    function makeDraggable(el, block) {
+        el.classList.add('draggable');
+        el.addEventListener('pointerdown', (e) => onDragStart(e, block, el));
+    }
+
+    function onDragStart(e, block, el) {
+        // Only primary button (touch or left click)
+        if (e.button !== 0) return;
+
+        // Small threshold so clicks don't accidentally drag
+        const startX = e.clientX;
+        const startY = e.clientY;
+        let hasMoved = false;
+
+        const slotCount = getBlockSlotCount(block);
+
+        const onMove = (moveEvent) => {
+            const dx = moveEvent.clientX - startX;
+            const dy = moveEvent.clientY - startY;
+
+            if (!hasMoved && Math.abs(dx) + Math.abs(dy) < 10) return;
+
+            if (!hasMoved) {
+                hasMoved = true;
+                // Create ghost
+                const ghost = document.createElement('div');
+                ghost.className = 'drag-ghost';
+                ghost.textContent = block.title;
+                ghost.style.backgroundColor = getCategoryColor(block.category);
+                ghost.style.color = getTextColorForCategory(block.category);
+                ghost.style.width = el.offsetWidth + 'px';
+                ghost.style.height = el.offsetHeight + 'px';
+                document.body.appendChild(ghost);
+
+                el.classList.add('dragging');
+
+                dragState = {
+                    blockId: block.id,
+                    block: block,
+                    ghost: ghost,
+                    element: el,
+                    slotCount: slotCount
+                };
+            }
+
+            // Move ghost
+            if (dragState && dragState.ghost) {
+                dragState.ghost.style.left = moveEvent.clientX - 40 + 'px';
+                dragState.ghost.style.top = moveEvent.clientY - 15 + 'px';
+            }
+
+            // Highlight target slot
+            highlightDropTarget(moveEvent.clientX, moveEvent.clientY);
+        };
+
+        const onUp = (upEvent) => {
+            document.removeEventListener('pointermove', onMove);
+            document.removeEventListener('pointerup', onUp);
+
+            if (hasMoved && dragState) {
+                // Find drop target
+                const targetSlot = getSlotAtPosition(upEvent.clientX, upEvent.clientY);
+                if (targetSlot) {
+                    const newTime = targetSlot.dataset.time;
+                    if (newTime && newTime !== block.startTime) {
+                        // Calculate new end time
+                        const newStartIdx = timeToSlotIndex(newTime);
+                        const newEndIdx = newStartIdx + dragState.slotCount;
+                        const maxIdx = TOTAL_SLOTS;
+
+                        if (newEndIdx <= maxIdx && newStartIdx >= 0) {
+                            const newEndTime = slotIndexToTime(newEndIdx);
+
+                            // Dispatch move event
+                            const event = new CustomEvent('blockMoved', {
+                                detail: {
+                                    blockId: block.id,
+                                    startTime: newTime,
+                                    endTime: newEndTime
+                                }
+                            });
+                            document.dispatchEvent(event);
+                        }
+                    }
+                }
+
+                // Cleanup
+                dragState.element.classList.remove('dragging');
+                if (dragState.ghost) dragState.ghost.remove();
+                clearDragHighlights();
+                dragState = null;
+            }
+        };
+
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+
+        // Prevent default to avoid text selection on touch
+        e.preventDefault();
+    }
+
+    function highlightDropTarget(x, y) {
+        clearDragHighlights();
+        const slot = getSlotAtPosition(x, y);
+        if (slot) {
+            slot.classList.add('drag-over');
+        }
+    }
+
+    function clearDragHighlights() {
+        if (!gridElement) return;
+        gridElement.querySelectorAll('.drag-over').forEach(s => s.classList.remove('drag-over'));
+    }
+
+    function getSlotAtPosition(x, y) {
+        // Use elementsFromPoint to find the slot under the cursor
+        const elements = document.elementsFromPoint(x, y);
+        for (const el of elements) {
+            if (el.classList.contains('time-slot')) {
+                return el;
+            }
+            // If we hit a row, find the closest slot
+            if (el.classList.contains('timegrid-row')) {
+                const slots = el.querySelectorAll('.time-slot');
+                if (slots.length > 0) {
+                    // Find the slot closest to x
+                    let closest = slots[0];
+                    let closestDist = Infinity;
+                    slots.forEach(s => {
+                        const rect = s.getBoundingClientRect();
+                        const dist = Math.abs(rect.left + rect.width / 2 - x);
+                        if (dist < closestDist) {
+                            closestDist = dist;
+                            closest = s;
+                        }
+                    });
+                    return closest;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get text color for a category (dark or light text)
+     */
+    function getTextColorForCategory(category) {
+        const darkTextCategories = ['meal', 'recharge', 'relax', 'work', 'sleep', 'admin', 'other'];
+        return darkTextCategories.includes(category) ? '#333' : '#fff';
     }
 
     /**
