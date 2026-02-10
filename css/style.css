@@ -418,16 +418,16 @@ body {
 }
 
 .timegrid {
-    display: table;
+    display: flex;
+    flex-direction: column;
     width: 100%;
     min-width: 500px;
-    border-collapse: collapse;
     padding-bottom: 60px;
 }
 
 /* Header row with time markers */
 .timegrid-header {
-    display: table-row;
+    display: flex;
     background: var(--color-bg-tertiary);
     position: sticky;
     top: 0;
@@ -435,7 +435,8 @@ body {
 }
 
 .timegrid-header-cell {
-    display: table-cell;
+    flex: 1;
+    min-width: 0;
     padding: var(--spacing-xs) var(--spacing-sm);
     font-size: var(--font-size-xs);
     font-weight: 600;
@@ -443,10 +444,13 @@ body {
     text-align: center;
     border-bottom: 2px solid var(--color-border);
     border-right: 1px solid var(--color-border);
+    box-sizing: border-box;
 }
 
 .timegrid-header-cell:first-child {
     width: var(--grid-time-width);
+    min-width: var(--grid-time-width);
+    flex: none;
     text-align: right;
     padding-right: var(--spacing-md);
 }
