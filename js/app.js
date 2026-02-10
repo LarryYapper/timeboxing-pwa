@@ -266,7 +266,14 @@
                 showSyncStatus('Saved', 'success');
             } catch (e) {
                 console.error('Save failed', e);
-                showSyncStatus('Save Error', 'error');
+                // Handle auth errors gracefully
+                if (e.status === 401 || e.status === 403) {
+                    showSyncStatus('Sync Paused', 'warning');
+                } else if (!navigator.onLine) {
+                    showSyncStatus('Offline', 'warning');
+                } else {
+                    showSyncStatus('Save Error', 'error');
+                }
             } finally {
                 setTimeout(hideSyncStatus, 3000);
             }
