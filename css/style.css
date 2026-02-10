@@ -214,8 +214,9 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm) var(--spacing-md);
     padding: var(--spacing-xs) 0;
+    flex-wrap: wrap;
 }
 
 /* Removed duplicate logo and header-actions styles */
@@ -238,6 +239,7 @@ body {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
+    flex-shrink: 0;
 }
 
 .btn-sm {

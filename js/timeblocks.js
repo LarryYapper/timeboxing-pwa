@@ -100,25 +100,48 @@ const TimeBlocks = (function () {
      */
     function computeOverlapLanes(blocks) {
         const lanes = {};
-        for (const block of blocks) {
+
+        // Group blocks into overlap clusters
+        const sorted = [...blocks].sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+        for (const block of sorted) {
             const isBackground = block.isRoutine || block.fromCalendar;
 
-            // Only check for overlaps between user tasks and background blocks
-            const hasConflict = blocks.some(b => {
+            // Find all blocks that overlap with this one
+            const overlapping = blocks.filter(b => {
                 if (b.id === block.id) return false;
-                if (b.startTime >= block.endTime || b.endTime <= block.startTime) return false;
-                // Only count as conflict if one is background and the other isn't
-                const otherIsBackground = b.isRoutine || b.fromCalendar;
-                return isBackground !== otherIsBackground;
+                return b.startTime < block.endTime && b.endTime > block.startTime;
             });
 
-            if (!hasConflict) {
+            if (overlapping.length === 0) {
                 lanes[block.id] = { lane: 0, totalLanes: 1 };
+                continue;
+            }
+
+            // Check what types overlap
+            const hasUserTaskOverlap = overlapping.some(b => !b.isRoutine && !b.fromCalendar);
+            const hasCalendarOverlap = overlapping.some(b => b.fromCalendar);
+            const hasRoutineOverlap = overlapping.some(b => b.isRoutine);
+
+            if (isBackground && !hasUserTaskOverlap && !hasCalendarOverlap) {
+                // Background block only overlaps with other routines - show full
+                lanes[block.id] = { lane: 0, totalLanes: 1 };
+            } else if (block.isRoutine && hasUserTaskOverlap) {
+                // Routine overlapping with user task: routine top, user bottom
+                lanes[block.id] = { lane: 0, totalLanes: 2 };
+            } else if (!isBackground && (hasRoutineOverlap || hasCalendarOverlap)) {
+                // User task overlapping with routine or calendar: user bottom
+                lanes[block.id] = { lane: 1, totalLanes: 2 };
+            } else if (block.fromCalendar && hasCalendarOverlap) {
+                // Calendar overlapping with other calendar: assign lanes by order
+                const calOverlaps = overlapping.filter(b => b.fromCalendar);
+                const allCals = [block, ...calOverlaps].sort((a, b) =>
+                    a.startTime.localeCompare(b.startTime) || a.id.localeCompare(b.id)
+                );
+                const myIndex = allCals.findIndex(b => b.id === block.id);
+                lanes[block.id] = { lane: myIndex, totalLanes: allCals.length };
             } else {
-                lanes[block.id] = {
-                    lane: isBackground ? 0 : 1,
-                    totalLanes: 2
-                };
+                lanes[block.id] = { lane: 0, totalLanes: 1 };
             }
         }
         return lanes;

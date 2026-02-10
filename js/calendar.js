@@ -385,8 +385,8 @@ const Calendar = (function () {
             const allEvents = results.flat();
 
             // 3. Convert to our block format
-            return allEvents
-                .filter(event => event.start && event.start.dateTime) // Only timed events
+            const timedEvents = allEvents
+                .filter(event => event.start && event.start.dateTime)
                 .map(event => ({
                     id: `gcal_${event.id}`,
                     title: event.summary || 'Bez názvu',
@@ -398,8 +398,22 @@ const Calendar = (function () {
                     description: event.description || '',
                     location: event.location || '',
                     calendarName: event.calendarSummary
-                    // We could use event.backgroundColor here if we wanted multi-colored calendar blocks
                 }));
+
+            // All-day events (have start.date instead of start.dateTime)
+            const allDayEvents = allEvents
+                .filter(event => event.start && event.start.date && !event.start.dateTime)
+                .map(event => ({
+                    id: `gcal_allday_${event.id}`,
+                    title: event.summary || 'Bez názvu',
+                    isAllDay: true,
+                    fromCalendar: true,
+                    calendarName: event.calendarSummary
+                }));
+
+            // Attach allDay events as a property on the array for backward compat
+            timedEvents.allDayEvents = allDayEvents;
+            return timedEvents;
 
         } catch (error) {
             console.error('Error fetching calendar events:', error);
