@@ -164,15 +164,114 @@
         });
     }
 
+    // Sync state
+    let isSyncing = false;
+    let saveTimeout = null;
+
     /**
-     * Initialize Google Calendar
+     * Initialize Google Calendar / Drive
      */
     async function initCalendar() {
         try {
-            await Calendar.init(handleSignInChange);
+            await Calendar.init(async (isSignedIn) => {
+                handleSignInChange(isSignedIn);
+                if (isSignedIn) {
+                    await syncFromDrive();
+                }
+            });
         } catch (error) {
             console.log('Google Calendar not available:', error.message);
         }
+    }
+
+    /**
+     * Sync data from Drive
+     */
+    async function syncFromDrive() {
+        if (isSyncing) return;
+        isSyncing = true;
+        showSyncStatus('Syncing...', 'normal');
+
+        try {
+            const remoteData = await Calendar.loadData();
+            if (remoteData) {
+                await Storage.importBackup(remoteData, true);
+                console.log('Synced from Drive');
+                await loadDate(currentDate); // Reload UI
+                showSyncStatus('Synced', 'success');
+            } else {
+                console.log('No remote data found, first sync?');
+                triggerAutoSave();
+            }
+        } catch (e) {
+            console.error('Sync failed', e);
+            showSyncStatus('Sync Error', 'error');
+        } finally {
+            isSyncing = false;
+            setTimeout(hideSyncStatus, 3000);
+        }
+    }
+
+    /**
+     * Trigger auto-save to Drive
+     */
+    function triggerAutoSave() {
+        if (!Calendar.getSignedInStatus()) return;
+
+        if (saveTimeout) clearTimeout(saveTimeout);
+        showSyncStatus('Saving...', 'normal');
+
+        saveTimeout = setTimeout(async () => {
+            try {
+                const data = await Storage.exportBackup();
+                await Calendar.saveData(data);
+                showSyncStatus('Saved', 'success');
+            } catch (e) {
+                console.error('Save failed', e);
+                showSyncStatus('Save Error', 'error');
+            } finally {
+                setTimeout(hideSyncStatus, 3000);
+            }
+        }, 2000);
+    }
+
+    // Helper for visual feedback
+    function showSyncStatus(msg, type) {
+        let badge = document.getElementById('sync-status-badge');
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.id = 'sync-status-badge';
+            badge.style.position = 'fixed';
+            badge.style.bottom = '20px';
+            badge.style.right = '20px';
+            badge.style.padding = '8px 12px';
+            badge.style.borderRadius = '20px';
+            badge.style.fontSize = '12px';
+            badge.style.fontWeight = '500';
+            badge.style.zIndex = '1000';
+            badge.style.transition = 'opacity 0.3s';
+            document.body.appendChild(badge);
+        }
+
+        badge.textContent = msg;
+        badge.style.opacity = '1';
+
+        if (type === 'error') {
+            badge.style.backgroundColor = 'var(--color-danger)';
+            badge.style.color = '#fff';
+        } else if (type === 'success') {
+            badge.style.backgroundColor = 'var(--color-success)';
+            badge.style.color = '#fff';
+        } else {
+            badge.style.backgroundColor = 'var(--color-surface)';
+            badge.style.color = 'var(--color-text)';
+            badge.style.border = '1px solid var(--color-border)';
+        }
+    }
+
+    function hideSyncStatus() {
+        const badge = document.getElementById('sync-status-badge');
+        if (badge) badge.style.opacity = '0';
     }
 
     /**
@@ -180,7 +279,7 @@
      */
     function handleSignInChange(signedIn) {
         const btn = elements.googleSigninBtn;
-
+        // ... (rest of logic same as before but ensured here)
         if (signedIn) {
             btn.innerHTML = `
                 <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
@@ -189,8 +288,6 @@
                 <span>Připojeno</span>
             `;
             btn.classList.add('connected');
-
-            // Reload current date to fetch calendar events
             loadDate(currentDate);
             elements.syncCalendarBtn.hidden = false;
         } else {
@@ -488,6 +585,7 @@
 
         await Storage.saveBlock(block);
         renderBlocks();
+        triggerAutoSave(); // Sync to Drive
         closeModal();
     }
 
@@ -508,6 +606,7 @@
         blocks = [...routineBlocks, ...localBlocks, ...calendarBlocks];
 
         renderBlocks();
+        triggerAutoSave(); // Sync to Drive
         closeModal();
     }
 

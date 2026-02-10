@@ -802,6 +802,24 @@ body {
         padding: var(--spacing-sm);
     }
 
+    /* Compact Header on Mobile */
+    .header-compact {
+        padding: var(--spacing-xs) 0;
+    }
+
+    .header-compact .logo {
+        display: none;
+    }
+
+    .date-text {
+        font-size: var(--font-size-base);
+        min-width: auto;
+    }
+
+    .btn-sm {
+        padding: var(--spacing-xs);
+    }
+
     .form-row {
         grid-template-columns: 1fr;
     }

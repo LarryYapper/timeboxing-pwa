@@ -6,14 +6,21 @@ const Calendar = (function () {
     // Replace with your Google Cloud Console Client ID
     const CLIENT_ID = '152474497789-at2nvf7odl1f8p7bfd1k1p5si58s4ius.apps.googleusercontent.com';
     const API_KEY = ''; // Optional: API key for quota management
-    const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly';
-    const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
+
+    // Scopes: Calendar (read/write for future), Drive AppData (read/write)
+    const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.appdata';
+    const DISCOVERY_DOCS = [
+        'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest',
+        'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
+    ];
 
     let tokenClient = null;
     let gapiInited = false;
     let gisInited = false;
     let isSignedIn = false;
     let onSignInChange = null;
+    const DATA_FILENAME = 'timeboxing-data.json';
+
 
     /**
      * Initialize the Google API client
@@ -32,7 +39,7 @@ const Calendar = (function () {
 
         await gapi.client.init({
             apiKey: API_KEY,
-            discoveryDocs: [DISCOVERY_DOC],
+            discoveryDocs: DISCOVERY_DOCS,
         });
 
         gapiInited = true;
@@ -51,10 +58,209 @@ const Calendar = (function () {
         if (storedToken) {
             gapi.client.setToken(storedToken);
             isSignedIn = true;
+
+            // Validate token (optional but good) - for now just assume valid or handle 401 later
             if (onSignInChange) onSignInChange(true);
         }
 
         return gapiInited && gisInited;
+    }
+
+    /**
+     * Find the data file in AppData folder
+     */
+    async function findDataFile() {
+        if (!isSignedIn) return null;
+        try {
+            const response = await gapi.client.drive.files.list({
+                spaces: 'appDataFolder',
+                fields: 'nextPageToken, files(id, name)',
+                q: `name = '${DATA_FILENAME}'`,
+                pageSize: 10
+            });
+            const files = response.result.files;
+            if (files && files.length > 0) {
+                return files[0].id;
+            }
+            return null;
+        } catch (err) {
+            console.error('Error finding data file:', err);
+            return null; // Don't throw, just return null so we know to create it
+        }
+    }
+
+    /**
+     * Save data to Google Drive AppData
+     * @param {Object} data - Application data object
+     */
+    async function saveData(data) {
+        if (!isSignedIn) return;
+        try {
+            const fileId = await findDataFile();
+            const boundary = '-------314159265358979323846';
+            const delimiter = "\r\n--" + boundary + "\r\n";
+            const close_delim = "\r\n--" + boundary + "--";
+
+            const contentType = 'application/json';
+            const metadata = {
+                'name': DATA_FILENAME,
+                'mimeType': contentType,
+                'parents': ['appDataFolder'] // Only needed on create
+            };
+
+            const multipartRequestBody =
+                delimiter +
+                'Content-Type: application/json\r\n\r\n' +
+                JSON.stringify(metadata) +
+                delimiter +
+                'Content-Type: ' + contentType + '\r\n\r\n' +
+                JSON.stringify(data) +
+                close_delim;
+
+            const request = gapi.client.request({
+                'path': fileId ? `/upload/drive/v3/files/${fileId}` : '/upload/drive/v3/files',
+                'method': fileId ? 'PATCH' : 'POST',
+                'params': { 'uploadType': 'multipart' },
+                'headers': {
+                    'Content-Type': 'multipart/related; boundary="' + boundary + '"'
+                },
+                'body': multipartRequestBody
+            });
+
+            await request;
+            console.log('Data saved to Drive successfully');
+            return true;
+        } catch (err) {
+            console.error('Error saving to Drive:', err);
+            if (err.status === 401) handleAuthError();
+        }
+    }
+
+    /**
+     * Load data from Google Drive AppData
+     */
+    async function loadData() {
+        if (!isSignedIn) return null;
+        try {
+            const fileId = await findDataFile();
+            if (!fileId) return null; // No remote data yet
+
+            const response = await gapi.client.drive.files.get({
+                fileId: fileId,
+                alt: 'media'
+            });
+
+            return response.result;
+        } catch (err) {
+            console.error('Error loading from Drive:', err);
+            if (err.status === 401) handleAuthError();
+            return null;
+        }
+    }
+
+    function handleAuthError() {
+        isSignedIn = false;
+        Storage.setSetting('google_token', null); // Clear invalid token
+        if (onSignInChange) onSignInChange(false);
+    }
+
+    /**
+     * Find the data file in AppData folder
+     */
+    async function findDataFile() {
+        if (!isSignedIn) return null;
+        try {
+            const response = await gapi.client.drive.files.list({
+                spaces: 'appDataFolder',
+                fields: 'nextPageToken, files(id, name)',
+                q: `name = '${DATA_FILENAME}'`,
+                pageSize: 10
+            });
+            const files = response.result.files;
+            if (files && files.length > 0) {
+                return files[0].id;
+            }
+            return null;
+        } catch (err) {
+            console.error('Error finding data file:', err);
+            return null;
+        }
+    }
+
+    /**
+     * Save data to Google Drive AppData
+     * @param {Object} data - Application data object
+     */
+    async function saveData(data) {
+        if (!isSignedIn) return;
+        try {
+            const fileId = await findDataFile();
+            const boundary = '-------314159265358979323846';
+            const delimiter = "\r\n--" + boundary + "\r\n";
+            const close_delim = "\r\n--" + boundary + "--";
+
+            const contentType = 'application/json';
+            const metadata = {
+                'name': DATA_FILENAME,
+                'mimeType': contentType,
+                'parents': ['appDataFolder'] // Only needed on create
+            };
+
+            const multipartRequestBody =
+                delimiter +
+                'Content-Type: application/json\r\n\r\n' +
+                JSON.stringify(metadata) +
+                delimiter +
+                'Content-Type: ' + contentType + '\r\n\r\n' +
+                JSON.stringify(data) +
+                close_delim;
+
+            const request = gapi.client.request({
+                'path': fileId ? `/upload/drive/v3/files/${fileId}` : '/upload/drive/v3/files',
+                'method': fileId ? 'PATCH' : 'POST',
+                'params': { 'uploadType': 'multipart' },
+                'headers': {
+                    'Content-Type': 'multipart/related; boundary="' + boundary + '"'
+                },
+                'body': multipartRequestBody
+            });
+
+            await request;
+            console.log('Data saved to Drive successfully');
+            return true;
+        } catch (err) {
+            console.error('Error saving to Drive:', err);
+            if (err.status === 401) handleAuthError();
+            throw err;
+        }
+    }
+
+    /**
+     * Load data from Google Drive AppData
+     */
+    async function loadData() {
+        if (!isSignedIn) return null;
+        try {
+            const fileId = await findDataFile();
+            if (!fileId) return null; // No remote data yet
+
+            const response = await gapi.client.drive.files.get({
+                fileId: fileId,
+                alt: 'media'
+            });
+
+            return response.result;
+        } catch (err) {
+            console.error('Error loading from Drive:', err);
+            if (err.status === 401) handleAuthError();
+            return null;
+        }
+    }
+
+    function handleAuthError() {
+        isSignedIn = false;
+        Storage.setSetting('google_token', null); // Clear invalid token
+        if (onSignInChange) onSignInChange(false);
     }
 
     /**
@@ -249,6 +455,8 @@ const Calendar = (function () {
         signOut,
         getEventsForDate,
         getSignedInStatus,
-        getUserInfo
+        getUserInfo,
+        saveData,
+        loadData
     };
 })();
