@@ -642,11 +642,7 @@ body {
 /* Calendar indicator */
 .time-block-content.from-calendar,
 .time-block-fill.from-calendar {
-    background-image: repeating-linear-gradient(-45deg,
-            transparent,
-            transparent 3px,
-            rgba(255, 255, 255, 0.4) 3px,
-            rgba(255, 255, 255, 0.4) 6px) !important;
+    border-left: 3px solid rgba(255, 255, 255, 0.5);
     color: white !important;
 }
 

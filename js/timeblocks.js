@@ -242,6 +242,7 @@ const TimeBlocks = (function () {
                 if (isFirstCell) {
                     const notesHtml = block.notes ? `<span class="block-notes">${escapeHtml(block.notes)}</span>` : '';
                     fill.innerHTML = `<span class="block-title">${escapeHtml(block.title)}</span>${notesHtml}`;
+                    fill.style.zIndex = '10'; // Above neighboring fills so title overflows visibly
                     isFirstCell = false;
                 }
 
