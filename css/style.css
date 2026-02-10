@@ -943,9 +943,7 @@ body {
 
 /* Google button text fallback */
 .google-btn-text {
-    font-weight: 700;
-    font-size: var(--font-size-sm);
-    color: #333;
+    display: none;
 }
 
 /* ====================================
