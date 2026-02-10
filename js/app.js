@@ -76,7 +76,8 @@
             document.body.classList.add('light-mode');
             document.body.classList.remove('dark-mode');
             if (elements.themeToggle) elements.themeToggle.textContent = '☀️';
-        } else if (saved === 'dark') {
+        } else {
+            // Default to dark mode
             document.body.classList.add('dark-mode');
             document.body.classList.remove('light-mode');
             if (elements.themeToggle) elements.themeToggle.textContent = '🌙';
