@@ -101,15 +101,20 @@ const TimeBlocks = (function () {
     function computeOverlapLanes(blocks) {
         const lanes = {};
         for (const block of blocks) {
-            const overlapping = blocks.filter(b =>
-                b.id !== block.id &&
-                b.startTime < block.endTime &&
-                b.endTime > block.startTime
-            );
-            if (overlapping.length === 0) {
+            const isBackground = block.isRoutine || block.fromCalendar;
+
+            // Only check for overlaps between user tasks and background blocks
+            const hasConflict = blocks.some(b => {
+                if (b.id === block.id) return false;
+                if (b.startTime >= block.endTime || b.endTime <= block.startTime) return false;
+                // Only count as conflict if one is background and the other isn't
+                const otherIsBackground = b.isRoutine || b.fromCalendar;
+                return isBackground !== otherIsBackground;
+            });
+
+            if (!hasConflict) {
                 lanes[block.id] = { lane: 0, totalLanes: 1 };
             } else {
-                const isBackground = block.isRoutine || block.fromCalendar;
                 lanes[block.id] = {
                     lane: isBackground ? 0 : 1,
                     totalLanes: 2

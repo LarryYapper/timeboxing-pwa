@@ -400,8 +400,17 @@
         // Load calendar events
         calendarBlocks = await Calendar.getEventsForDate(dateStr);
 
-        // Combine all blocks - overlap lane system in TimeBlocks handles visual stacking
-        blocks = [...routineBlocks, ...localBlocks, ...calendarBlocks];
+        // Filter out routines that overlap with calendar events (calendar takes priority)
+        // But KEEP routines that overlap with user tasks - lane system handles that
+        const filteredRoutines = routineBlocks.filter(routine => {
+            const overlapsCalendar = calendarBlocks.some(cal => {
+                return cal.startTime < routine.endTime && cal.endTime > routine.startTime;
+            });
+            return !overlapsCalendar;
+        });
+
+        // Combine all blocks
+        blocks = [...filteredRoutines, ...localBlocks, ...calendarBlocks];
         renderBlocks();
     }
 
