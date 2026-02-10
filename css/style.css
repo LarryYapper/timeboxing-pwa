@@ -455,9 +455,8 @@ body {
     border-right: none;
 }
 
-/* Hour rows */
 .timegrid-row {
-    display: table-row;
+    display: flex;
     height: var(--grid-hour-height);
 }
 
@@ -471,32 +470,31 @@ body {
 
 /* Time label cell */
 .time-label {
-    display: table-cell;
     width: var(--grid-time-width);
     min-width: var(--grid-time-width);
+    flex-shrink: 0;
     padding: var(--spacing-xs) var(--spacing-sm);
     padding-right: var(--spacing-md);
     font-size: var(--font-size-sm);
     font-weight: 600;
     color: var(--color-text);
     text-align: right;
-    vertical-align: top;
     border-right: 2px solid var(--color-border);
     border-bottom: 1px solid var(--color-border);
     background: var(--color-bg-secondary);
+    box-sizing: border-box;
 }
 
 /* 15-minute slot cells */
 .time-slot {
-    display: table-cell;
-    width: 25%;
-    min-width: 80px;
+    flex: 1;
+    min-width: 0;
     height: var(--grid-hour-height);
     border-right: 1px solid var(--color-border);
     border-bottom: 1px solid var(--color-border);
     position: relative;
-    vertical-align: top;
     overflow: visible;
+    box-sizing: border-box;
 }
 
 .time-slot:last-child {
@@ -650,7 +648,7 @@ body {
 
 .time-block-content.from-calendar .block-title,
 .time-block-fill.from-calendar .block-title {
-    font-weight: 400;
+    font-weight: 700;
 }
 
 .time-block-content.from-calendar::after,
