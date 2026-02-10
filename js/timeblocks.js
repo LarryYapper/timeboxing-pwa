@@ -311,15 +311,51 @@ const TimeBlocks = (function () {
 
         const startX = e.clientX;
         const startY = e.clientY;
+        let holdActivated = false;
         let hasMoved = false;
         const slotCount = getBlockSlotCount(block);
+        const HOLD_DELAY = 400; // ms to hold before drag activates
 
-        const onMove = (moveEvent) => {
+        // Cancel hold if pointer moves too much before activation
+        const onMoveBeforeHold = (moveEvent) => {
             const dx = moveEvent.clientX - startX;
             const dy = moveEvent.clientY - startY;
-            if (!hasMoved && Math.abs(dx) + Math.abs(dy) < 10) return;
+            if (Math.abs(dx) + Math.abs(dy) > 8) {
+                cancelHold();
+            }
+        };
 
-            if (!hasMoved) {
+        const onUpBeforeHold = () => {
+            cancelHold();
+        };
+
+        const cancelHold = () => {
+            clearTimeout(holdTimer);
+            document.removeEventListener('pointermove', onMoveBeforeHold);
+            document.removeEventListener('pointerup', onUpBeforeHold);
+        };
+
+        // After hold delay, activate drag mode
+        const holdTimer = setTimeout(() => {
+            holdActivated = true;
+            document.removeEventListener('pointermove', onMoveBeforeHold);
+            document.removeEventListener('pointerup', onUpBeforeHold);
+
+            // Visual feedback that drag is active
+            el.style.opacity = '0.6';
+
+            document.addEventListener('pointermove', onDragMove);
+            document.addEventListener('pointerup', onDragUp);
+        }, HOLD_DELAY);
+
+        document.addEventListener('pointermove', onMoveBeforeHold);
+        document.addEventListener('pointerup', onUpBeforeHold);
+
+        const onDragMove = (moveEvent) => {
+            const dx = moveEvent.clientX - startX;
+            const dy = moveEvent.clientY - startY;
+
+            if (!hasMoved && Math.abs(dx) + Math.abs(dy) >= 5) {
                 hasMoved = true;
                 const ghost = document.createElement('div');
                 ghost.className = 'drag-ghost';
@@ -330,7 +366,6 @@ const TimeBlocks = (function () {
                 ghost.style.height = el.offsetHeight + 'px';
                 document.body.appendChild(ghost);
 
-                // Mark ALL fills for this block as dragging
                 document.querySelectorAll(`.time-block-fill[data-block-id="${block.id}"]`).forEach(f => {
                     f.classList.add('dragging');
                 });
@@ -352,9 +387,10 @@ const TimeBlocks = (function () {
             highlightDropTarget(moveEvent.clientX, moveEvent.clientY);
         };
 
-        const onUp = (upEvent) => {
-            document.removeEventListener('pointermove', onMove);
-            document.removeEventListener('pointerup', onUp);
+        const onDragUp = (upEvent) => {
+            document.removeEventListener('pointermove', onDragMove);
+            document.removeEventListener('pointerup', onDragUp);
+            el.style.opacity = '';
 
             if (hasMoved && dragState) {
                 const targetSlot = getSlotAtPosition(upEvent.clientX, upEvent.clientY);
@@ -387,8 +423,6 @@ const TimeBlocks = (function () {
             }
         };
 
-        document.addEventListener('pointermove', onMove);
-        document.addEventListener('pointerup', onUp);
         e.preventDefault();
     }
 
