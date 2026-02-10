@@ -630,32 +630,19 @@ body {
     font-weight: 600;
 }
 
-/* Routine indicator */
-.time-block-content.is-routine::after,
-.time-block-fill.is-routine:first-child::after {
-    content: '🔁';
-    margin-left: auto;
-    font-size: var(--font-size-xs);
-    opacity: 0.6;
-}
+
 
 /* Calendar indicator */
 .time-block-content.from-calendar,
 .time-block-fill.from-calendar {
-    border-left: 3px solid rgba(255, 255, 255, 0.5);
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.25) 1px, transparent 1px);
+    background-size: 8px 8px;
     color: white !important;
 }
 
 .time-block-content.from-calendar .block-title,
 .time-block-fill.from-calendar .block-title {
     font-weight: 700;
-}
-
-.time-block-content.from-calendar::after,
-.time-block-fill.from-calendar:first-child::after {
-    content: '📅';
-    margin-left: auto;
-    font-size: var(--font-size-xs);
 }
 
 /* ====================================

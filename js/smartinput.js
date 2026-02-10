@@ -22,6 +22,8 @@ const SmartInput = (function () {
         simpleTime: /\b(\d{1,2})[:.](\d{2})\b/,
         // "od 7 do 8", "od 7:00 do 8:30"
         fromTo: /od\s*(\d{1,2})(?::(\d{2}))?\s*do\s*(\d{1,2})(?::(\d{2}))?/i,
+        // "20:45 until 22:00", "7 until 8:30"
+        until: /(\d{1,2})(?:[:.]?(\d{2}))?\s*until\s*(\d{1,2})(?:[:.]?(\d{2}))?/i,
         // "7-8", "7:00-8:30"
         range: /(\d{1,2})(?::(\d{2}))?-(\d{1,2})(?::(\d{2}))?/,
     };
@@ -118,6 +120,16 @@ const SmartInput = (function () {
             }
         }
 
+        // Try "X until Y" pattern
+        match = input.match(TIME_PATTERNS.until);
+        if (match) {
+            startTime = parseTime(match[1], match[2]);
+            endTime = parseTime(match[3], match[4]);
+            if (startTime && endTime) {
+                return { startTime, endTime };
+            }
+        }
+
         // Try "X-Y" range pattern
         match = input.match(TIME_PATTERNS.range);
         if (match) {
@@ -188,6 +200,7 @@ const SmartInput = (function () {
         let title = input
             // Remove time patterns
             .replace(TIME_PATTERNS.fromTo, '')
+            .replace(TIME_PATTERNS.until, '')
             .replace(TIME_PATTERNS.range, '')
             .replace(TIME_PATTERNS.atTime, '')
             .replace(TIME_PATTERNS.simpleTime, '')
