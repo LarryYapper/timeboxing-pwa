@@ -400,20 +400,24 @@
         // Load calendar events
         calendarBlocks = await Calendar.getEventsForDate(dateStr);
 
-        // Filter out routines that overlap with calendar events (calendar takes priority)
-        // Also filter out routines hidden by user for this day
+        // Combine all blocks (filtering routines that overlap calendar/are hidden)
+        blocks = [...getFilteredRoutines(), ...localBlocks, ...calendarBlocks];
+        renderBlocks();
+    }
+
+    /**
+     * Filter routines: remove those overlapping calendar events or hidden by user
+     */
+    function getFilteredRoutines() {
+        const dateStr = formatDateStr(currentDate);
         const hiddenRoutineIds = getHiddenRoutines(dateStr);
-        const filteredRoutines = routineBlocks.filter(routine => {
+        return routineBlocks.filter(routine => {
             if (hiddenRoutineIds.includes(routine.id)) return false;
             const overlapsCalendar = calendarBlocks.some(cal => {
                 return cal.startTime < routine.endTime && cal.endTime > routine.startTime;
             });
             return !overlapsCalendar;
         });
-
-        // Combine all blocks
-        blocks = [...filteredRoutines, ...localBlocks, ...calendarBlocks];
-        renderBlocks();
     }
 
     /**
@@ -512,7 +516,7 @@
 
         await Storage.saveBlock(block);
         localBlocks.push(block);
-        blocks = [...routineBlocks, ...localBlocks, ...calendarBlocks];
+        blocks = [...getFilteredRoutines(), ...localBlocks, ...calendarBlocks];
         renderBlocks();
 
         // Clear input
