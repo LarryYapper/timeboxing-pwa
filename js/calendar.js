@@ -149,9 +149,13 @@ const Calendar = (function () {
             return true; // Return true to indicate success
         } catch (err) {
             console.error('Error saving to Drive:', err);
-            // Re-throw so caller knows it failed
+
+            // Show visible error for debugging
+            const msg = err.result?.error?.message || err.message || JSON.stringify(err);
+            alert(`Save Failed: ${msg}\n\nPlease check console for more details.`);
+
             if (err.status === 401) handleAuthError();
-            throw err;
+            throw err; // Ensure caller knows
         }
     }
 

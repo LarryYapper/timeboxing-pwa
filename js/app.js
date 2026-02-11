@@ -368,6 +368,8 @@
                 } else {
                     showSyncStatus('Save Error', 'error');
                 }
+
+                if (force) throw e; // RETHROW if forced so UI knows
             } finally {
                 setTimeout(hideSyncStatus, 3000);
             }
