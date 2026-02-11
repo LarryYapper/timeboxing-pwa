@@ -172,12 +172,17 @@ const Calendar = (function () {
         try {
             const response = await gapi.client.drive.files.list({
                 spaces: 'appDataFolder',
-                fields: 'nextPageToken, files(id, name)',
+                fields: 'nextPageToken, files(id, name, createdTime)',
                 q: `name = '${DATA_FILENAME}'`,
+                orderBy: 'createdTime', // Oldest first (stable master)
                 pageSize: 10
             });
             const files = response.result.files;
             if (files && files.length > 0) {
+                if (files.length > 1) {
+                    console.warn('Multiple data files found! Using oldest:', files[0].id);
+                    // alert('Debug: Found multiple data files. Using original.');
+                }
                 return files[0].id;
             }
             return null;

@@ -262,8 +262,16 @@
                 // This prevents losing local changes that haven't been pushed yet
                 await Storage.importBackup(remoteData, false);
                 console.log('Synced from Drive (Merged)');
+
                 await loadDate(currentDate); // Reload UI
-                showSyncStatus('Synced', 'success');
+
+                // Debug alert for user
+                const remoteCount = remoteData.blocks ? remoteData.blocks.length : 0;
+                // Note: currentBlocks is updated by loadDate, but might just be for current day.
+                // We want TOTAL blocks in DB? Storage.getBlocksByDate only gets one day.
+                // We'll just show remote count for now.
+                showSyncStatus(`Synced: ${remoteCount} tasks`, 'success');
+                // alert(`Sync Debug: Pulled ${remoteCount} tasks from Drive.`);
             } else {
                 console.log('No remote data found, first sync?');
                 triggerAutoSave();
