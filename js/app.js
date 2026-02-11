@@ -18,7 +18,7 @@
         '#326663', // Creative (Teal)
         '#724431', // Other (Brown)
         '#090909', // Deep Work (Black)
-        '#F39242'  // Energy (Orange)
+        '#e37400'  // Energy (Darker Orange)
     ];
 
     // DOM Elements

@@ -40,24 +40,25 @@
     --color-primary-dark: #5d4e37;
     --color-primary-light: #c9a77d;
 
-    /* Colors - Categories (exact hex from user) */
-    --color-sleep: #fec93d;
-    /* Yellow - Spánek */
-    --color-routine: #e44033;
-    /* Red - Ranní rutina */
-    --color-meal: #fec93d;
+    /* Colors - Categories (E-ink optimized) */
+    --color-sleep: #f59e0b;
+    /* Darker Gold/Yellow */
+    --color-routine: #dc2626;
+    /* Darker Red */
+    --color-meal: #f59e0b;
     /* Same as sleep */
-    --color-recharge: #feceb9;
-    /* Peach - Recharge */
+    --color-recharge: #fdba74;
+    /* Darker Peach */
     --color-routine-evening: #59875e;
-    /* Dark green - Večerní rutina */
+    /* Dark green (Good) */
     --color-routine-night: #316feb;
-    /* Blue - Noční rutina */
-    --color-relax: #cce4e1;
-    /* Light teal - Relax */
-    --color-work: #FFF3CD;
-    /* Cream - Práce */
-    --color-calendar: #588AEE;
+    /* Blue (Good) */
+    --color-relax: #99f6e4;
+    /* Light Teal (Better contrast with black) */
+    --color-work: #fef3c7;
+    /* Cream (Standard) */
+    --color-calendar: #1558b0;
+    /* Darker Blue */
 
     /* User Task Colors */
     --color-task-focus: #B22B3A;
@@ -634,8 +635,8 @@ body {
 .time-block-content.is-routine,
 .time-block-fill.is-routine {
     background-image: repeating-linear-gradient(45deg,
-            rgba(255, 255, 255, 0.1),
-            rgba(255, 255, 255, 0.1) 10px,
+            rgba(255, 255, 255, 0.2),
+            rgba(255, 255, 255, 0.2) 10px,
             transparent 10px,
             transparent 20px);
 }
@@ -645,7 +646,7 @@ body {
 /* Calendar indicator */
 .time-block-content.from-calendar,
 .time-block-fill.from-calendar {
-    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.25) 1px, transparent 1px);
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
     background-size: 8px 8px;
     color: white !important;
 }

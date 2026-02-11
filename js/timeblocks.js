@@ -12,17 +12,17 @@ const TimeBlocks = (function () {
     let gridElement = null;
     let currentBlocks = [];
 
-    // Google Calendar logo colors
-    const CALENDAR_COLORS = ['#4285F4', '#EA4335', '#FBBC05', '#34A853'];
+    // Google Calendar logo colors (Darker for e-ink contrast)
+    const CALENDAR_COLORS = ['#1558b0', '#c5221f', '#f9ab00', '#137333'];
 
-    // User Task Palette
+    // User Task Palette (Optimized for E-ink)
     const TASK_PALETTE = [
-        '#B22B3A', // Focus (Red)
-        '#11326B', // Admin (Blue)
-        '#326663', // Creative (Teal)
-        '#724431', // Other (Brown)
+        '#B22B3A', // Focus (Red - Dark)
+        '#11326B', // Admin (Dark Blue)
+        '#326663', // Creative (Dark Teal)
+        '#724431', // Other (Dark Brown)
         '#090909', // Deep Work (Black)
-        '#F39242'  // Energy (Orange)
+        '#e37400'  // Energy (Darker Orange for white paper contrast)
     ];
 
     /**
@@ -517,7 +517,7 @@ const TimeBlocks = (function () {
 
     function getTextColorForCategory(category, bgColor) {
         // Energy (Orange) needs dark text for readability
-        if (bgColor === '#F39242' || category === 'energy') return '#1a1a1a';
+        if (bgColor === '#e37400' || bgColor === '#F39242' || category === 'energy') return '#1a1a1a';
 
         // Other palette colors (Red, Blue, Teal, Brown, Black) are dark -> use white text
         if (TASK_PALETTE.includes(bgColor)) return '#ffffff';
