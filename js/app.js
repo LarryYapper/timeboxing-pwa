@@ -353,7 +353,7 @@
 
             alert(`Synchronizace OK!\n\n` +
                 `Místní úkoly: ${localCount} (Remote: ${remoteBlockCount})\n` +
-                `Kalendář: ${eventCount} událostí` +
+                `Kalendář: ${eventCount} dnes, ${eventsSyncedCount} na 5 dní\n` +
                 remoteDebugInfo);
         } catch (error) {
             console.error('Sync failed:', error);
