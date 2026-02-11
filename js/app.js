@@ -501,6 +501,35 @@ console.log('Timeboxing App v0.63 loaded');
         }
     }
 
+    // DEBUG BUTTON LISTENER
+    const debugBtn = document.getElementById('debug-btn');
+    if (debugBtn) {
+        debugBtn.addEventListener('click', async () => {
+            if (!Calendar.getSignedInStatus()) {
+                alert('Not signed in');
+                return;
+            }
+
+            try {
+                const todayStr = formatDateStr(new Date());
+                alert(`DEBUG: Fetching events for TODAY (${todayStr})...`);
+                const events = await Calendar.getEventsForDate(todayStr);
+                alert(`DEBUG: Found ${events.length} events for TODAY.\nExample: ${events[0]?.title || 'none'}`);
+
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const tmrwStr = formatDateStr(tomorrow);
+                alert(`DEBUG: Fetching events for TOMORROW (${tmrwStr})...`);
+                const events2 = await Calendar.getEventsForDate(tmrwStr);
+                alert(`DEBUG: Found ${events2.length} events for TOMORROW.\nExample: ${events2[0]?.title || 'none'}`);
+
+            } catch (e) {
+                alert(`Debug Error: ${e.message}`);
+                console.error(e);
+            }
+        });
+    }
+
     /**
      * Handle manual calendar sync
      */

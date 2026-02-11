@@ -402,7 +402,7 @@ const Calendar = (function () {
     }
 
     // Public API
-    return {
+    window.Calendar = {
         init,
         signIn,
         signOut,
@@ -412,4 +412,6 @@ const Calendar = (function () {
         saveData,
         loadData
     };
+
+    return window.Calendar;
 })();
