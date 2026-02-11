@@ -417,426 +417,425 @@
         btn.classList.add('rotating');
 
         try {
-            try {
-                // STEP 1: Pull AppData (tasks) - Merge remote changes
-                await syncFromDrive();
+            // STEP 1: Pull AppData (tasks) - Merge remote changes
+            await syncFromDrive();
 
-                // STEP 2: Force Push Local Data - Ensure our changes are uploaded
-                await triggerAutoSave(true);
+            // STEP 2: Force Push Local Data - Ensure our changes are uploaded
+            await triggerAutoSave(true);
 
-                // STEP 3: Load events/local data for UI
-                await loadDate(currentDate);
+            // STEP 3: Load events/local data for UI
+            await loadDate(currentDate);
 
-                // Check if we found any events
-                const eventCount = calendarBlocks.length;
-                if (eventCount > 0) {
-                    // Modified alert to confirm task sync too
-                    alert(`Data synchronizována a uložena!\n\nÚkoly: OK\nKalendář: ${eventCount} událostí`);
-                } else {
-                    alert('Data synchronizována a uložena!\n\nÚkoly: OK');
-                }
-            } catch (error) {
-                console.error('Sync failed:', error);
-                alert('Synchronizace selhala. Zkuste se odhlásit a znovu přihlásit.');
-            } finally {
-                // Keep spinning a bit longer for visual feedback
-                setTimeout(() => {
-                    btn.classList.remove('rotating');
-                }, 500);
+            // Check if we found any events
+            const eventCount = calendarBlocks.length;
+            if (eventCount > 0) {
+                // Modified alert to confirm task sync too
+                alert(`Data synchronizována a uložena!\n\nÚkoly: OK\nKalendář: ${eventCount} událostí`);
+            } else {
+                alert('Data synchronizována a uložena!\n\nÚkoly: OK');
             }
+        } catch (error) {
+            console.error('Sync failed:', error);
+            alert('Synchronizace selhala. Zkuste se odhlásit a znovu přihlásit.');
+        } finally {
+            // Keep spinning a bit longer for visual feedback
+            setTimeout(() => {
+                btn.classList.remove('rotating');
+            }, 500);
         }
+    }
 
     /**
      * Load data for a specific date
      */
     async function loadDate(date) {
-            currentDate = date;
-            updateDateDisplay();
+        currentDate = date;
+        updateDateDisplay();
 
-            const dateStr = formatDateStr(date);
+        const dateStr = formatDateStr(date);
 
-            // Load routine blocks (appear every day)
-            routineBlocks = Routines.getRoutinesForDate(dateStr);
+        // Load routine blocks (appear every day)
+        routineBlocks = Routines.getRoutinesForDate(dateStr);
 
-            // Load local blocks (user-created)
-            localBlocks = await Storage.getBlocksByDate(dateStr);
+        // Load local blocks (user-created)
+        localBlocks = await Storage.getBlocksByDate(dateStr);
 
-            // Load calendar events
-            calendarBlocks = await Calendar.getEventsForDate(dateStr);
+        // Load calendar events
+        calendarBlocks = await Calendar.getEventsForDate(dateStr);
 
-            // Combine all blocks (filtering routines that overlap calendar/are hidden)
-            blocks = [...getFilteredRoutines(), ...localBlocks, ...calendarBlocks];
-            renderBlocks();
-        }
+        // Combine all blocks (filtering routines that overlap calendar/are hidden)
+        blocks = [...getFilteredRoutines(), ...localBlocks, ...calendarBlocks];
+        renderBlocks();
+    }
 
-        /**
-         * Filter routines: remove those overlapping calendar events or hidden by user
-         */
-        function getFilteredRoutines() {
-            const dateStr = formatDateStr(currentDate);
-            const hiddenRoutineIds = getHiddenRoutines(dateStr);
-            return routineBlocks.filter(routine => {
-                if (hiddenRoutineIds.includes(routine.id)) return false;
-                const overlapsCalendar = calendarBlocks.some(cal => {
-                    return cal.startTime < routine.endTime && cal.endTime > routine.startTime;
-                });
-                return !overlapsCalendar;
+    /**
+     * Filter routines: remove those overlapping calendar events or hidden by user
+     */
+    function getFilteredRoutines() {
+        const dateStr = formatDateStr(currentDate);
+        const hiddenRoutineIds = getHiddenRoutines(dateStr);
+        return routineBlocks.filter(routine => {
+            if (hiddenRoutineIds.includes(routine.id)) return false;
+            const overlapsCalendar = calendarBlocks.some(cal => {
+                return cal.startTime < routine.endTime && cal.endTime > routine.startTime;
             });
+            return !overlapsCalendar;
+        });
+    }
+
+    /**
+     * Render all blocks
+     */
+    function renderBlocks() {
+        const container = elements.timegrid.querySelector('.blocks-container');
+        TimeBlocks.render(blocks);
+    }
+
+    /**
+     * Update the date display
+     */
+    function updateDateDisplay() {
+        // Simple compact date: "Po 12. 1."
+        const options = { weekday: 'short', day: 'numeric', month: 'numeric' };
+        // Year is optional in compact view
+        elements.currentDate.textContent = currentDate.toLocaleDateString('cs-CZ', options);
+        if (elements.currentYear) {
+            elements.currentYear.textContent = currentDate.getFullYear();
+        }
+    }
+
+    /**
+     * Toggle smart input visibility
+     */
+    function toggleSmartInput() {
+        const container = document.querySelector('.smart-input-container');
+        if (getComputedStyle(container).display === 'none') {
+            container.style.display = 'block';
+            elements.smartInput.focus();
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
+    /**
+     * Change date by delta days
+     */
+    function changeDate(delta) {
+        const newDate = new Date(currentDate);
+        newDate.setDate(newDate.getDate() + delta);
+        loadDate(newDate);
+    }
+
+    /**
+     * Go to today
+     */
+    function goToToday() {
+        loadDate(new Date());
+    }
+
+    /**
+     * Format date to YYYY-MM-DD
+     */
+    function formatDateStr(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    /**
+     * Handle smart input changes
+     */
+    function handleSmartInputChange() {
+        const input = elements.smartInput.value;
+        const preview = SmartInput.getPreview(input);
+
+        elements.inputFeedback.textContent = preview.text;
+        elements.inputFeedback.className = 'input-feedback' + (preview.isError ? ' error' : ' success');
+    }
+
+    /**
+     * Add block from smart input
+     */
+    async function addBlockFromInput() {
+        const input = elements.smartInput.value;
+        const parsed = SmartInput.parse(input);
+
+        if (!parsed) {
+            elements.inputFeedback.textContent = 'Nerozpoznán čas. Zkuste např. "Meeting v 14:00 na 1 hodinu"';
+            elements.inputFeedback.className = 'input-feedback error';
+            return;
         }
 
-        /**
-         * Render all blocks
-         */
-        function renderBlocks() {
-            const container = elements.timegrid.querySelector('.blocks-container');
-            TimeBlocks.render(blocks);
-        }
+        const block = {
+            id: Storage.generateId(),
+            date: formatDateStr(currentDate),
+            title: parsed.title,
+            startTime: parsed.startTime,
+            endTime: parsed.endTime,
+            category: parsed.category,
+            fromCalendar: false,
+            // Assign random color for tasks (work category)
+            customColor: parsed.category === 'work' ? TASK_PALETTE[Math.floor(Math.random() * TASK_PALETTE.length)] : null
+        };
 
-        /**
-         * Update the date display
-         */
-        function updateDateDisplay() {
-            // Simple compact date: "Po 12. 1."
-            const options = { weekday: 'short', day: 'numeric', month: 'numeric' };
-            // Year is optional in compact view
-            elements.currentDate.textContent = currentDate.toLocaleDateString('cs-CZ', options);
-            if (elements.currentYear) {
-                elements.currentYear.textContent = currentDate.getFullYear();
-            }
-        }
+        await Storage.saveBlock(block);
+        localBlocks.push(block);
+        blocks = [...getFilteredRoutines(), ...localBlocks, ...calendarBlocks];
+        renderBlocks();
 
-        /**
-         * Toggle smart input visibility
-         */
-        function toggleSmartInput() {
-            const container = document.querySelector('.smart-input-container');
-            if (getComputedStyle(container).display === 'none') {
-                container.style.display = 'block';
-                elements.smartInput.focus();
-            } else {
-                container.style.display = 'none';
-            }
-        }
+        // Clear input
+        elements.smartInput.value = '';
+        elements.inputFeedback.textContent = `✓ Přidáno: ${block.title}`;
+        elements.inputFeedback.className = 'input-feedback success';
 
-        /**
-         * Change date by delta days
-         */
-        function changeDate(delta) {
-            const newDate = new Date(currentDate);
-            newDate.setDate(newDate.getDate() + delta);
-            loadDate(newDate);
-        }
+        // Clear feedback after 2 seconds
+        setTimeout(() => {
+            elements.inputFeedback.textContent = '';
+        }, 2000);
+    }
 
-        /**
-         * Go to today
-         */
-        function goToToday() {
-            loadDate(new Date());
-        }
+    /**
+     * Handle block moved event
+     */
+    async function handleBlockMoved(e) {
+        const { blockId, startTime, endTime } = e.detail;
 
-        /**
-         * Format date to YYYY-MM-DD
-         */
-        function formatDateStr(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
+        // Find the block
+        const block = blocks.find(b => b.id === blockId);
+        if (!block || block.fromCalendar) return;
 
-        /**
-         * Handle smart input changes
-         */
-        function handleSmartInputChange() {
-            const input = elements.smartInput.value;
-            const preview = SmartInput.getPreview(input);
+        if (block.isRoutine) {
+            // Hide original routine, create local copy at new time
+            hideRoutine(formatDateStr(currentDate), block.id);
 
-            elements.inputFeedback.textContent = preview.text;
-            elements.inputFeedback.className = 'input-feedback' + (preview.isError ? ' error' : ' success');
-        }
-
-        /**
-         * Add block from smart input
-         */
-        async function addBlockFromInput() {
-            const input = elements.smartInput.value;
-            const parsed = SmartInput.parse(input);
-
-            if (!parsed) {
-                elements.inputFeedback.textContent = 'Nerozpoznán čas. Zkuste např. "Meeting v 14:00 na 1 hodinu"';
-                elements.inputFeedback.className = 'input-feedback error';
-                return;
-            }
-
-            const block = {
+            const newBlock = {
                 id: Storage.generateId(),
                 date: formatDateStr(currentDate),
-                title: parsed.title,
-                startTime: parsed.startTime,
-                endTime: parsed.endTime,
-                category: parsed.category,
-                fromCalendar: false,
-                // Assign random color for tasks (work category)
-                customColor: parsed.category === 'work' ? TASK_PALETTE[Math.floor(Math.random() * TASK_PALETTE.length)] : null
+                title: block.title,
+                startTime: startTime,
+                endTime: endTime,
+                category: block.category,
+                notes: block.notes || '',
+                fromCalendar: false
             };
-
-            await Storage.saveBlock(block);
-            localBlocks.push(block);
-            blocks = [...getFilteredRoutines(), ...localBlocks, ...calendarBlocks];
-            renderBlocks();
-
-            // Clear input
-            elements.smartInput.value = '';
-            elements.inputFeedback.textContent = `✓ Přidáno: ${block.title}`;
-            elements.inputFeedback.className = 'input-feedback success';
-
-            // Clear feedback after 2 seconds
-            setTimeout(() => {
-                elements.inputFeedback.textContent = '';
-            }, 2000);
-        }
-
-        /**
-         * Handle block moved event
-         */
-        async function handleBlockMoved(e) {
-            const { blockId, startTime, endTime } = e.detail;
-
-            // Find the block
-            const block = blocks.find(b => b.id === blockId);
-            if (!block || block.fromCalendar) return;
-
-            if (block.isRoutine) {
-                // Hide original routine, create local copy at new time
-                hideRoutine(formatDateStr(currentDate), block.id);
-
-                const newBlock = {
-                    id: Storage.generateId(),
-                    date: formatDateStr(currentDate),
-                    title: block.title,
-                    startTime: startTime,
-                    endTime: endTime,
-                    category: block.category,
-                    notes: block.notes || '',
-                    fromCalendar: false
-                };
-                await Storage.saveBlock(newBlock);
-                localBlocks.push(newBlock);
-                await loadDate(currentDate);
-                triggerAutoSave();
-                return;
-            }
-
-            // Regular block - just update
-            block.startTime = startTime;
-            block.endTime = endTime;
-
-            await Storage.saveBlock(block);
+            await Storage.saveBlock(newBlock);
+            localBlocks.push(newBlock);
             await loadDate(currentDate);
             triggerAutoSave();
+            return;
         }
 
-        /**
-         * Handle block clicked event
-         */
-        function handleBlockClicked(e) {
-            const { blockId } = e.detail;
-            const block = blocks.find(b => b.id === blockId);
+        // Regular block - just update
+        block.startTime = startTime;
+        block.endTime = endTime;
 
-            if (block) {
-                openModal(block);
-            }
+        await Storage.saveBlock(block);
+        await loadDate(currentDate);
+        triggerAutoSave();
+    }
+
+    /**
+     * Handle block clicked event
+     */
+    function handleBlockClicked(e) {
+        const { blockId } = e.detail;
+        const block = blocks.find(b => b.id === blockId);
+
+        if (block) {
+            openModal(block);
+        }
+    }
+
+    /**
+     * Open the block edit modal
+     */
+    function openModal(block) {
+        editingBlockId = block.id;
+
+        elements.blockTitle.value = block.title;
+        elements.blockStart.value = block.startTime;
+        elements.blockEnd.value = block.endTime;
+        elements.blockNotes.value = block.notes || '';
+
+        // Set category
+        elements.categoryPicker.querySelectorAll('.category-btn').forEach(btn => {
+            btn.classList.toggle('selected', btn.dataset.category === block.category);
+        });
+
+        // Hide delete button for calendar events only
+        elements.deleteBlockBtn.style.display = block.fromCalendar ? 'none' : 'block';
+
+        // Disable form for calendar events only
+        const isCalendarEvent = block.fromCalendar;
+        elements.blockTitle.disabled = isCalendarEvent;
+        elements.blockStart.disabled = isCalendarEvent;
+        elements.blockEnd.disabled = isCalendarEvent;
+        elements.categoryPicker.querySelectorAll('.category-btn').forEach(btn => {
+            btn.disabled = isCalendarEvent;
+        });
+
+        elements.blockModal.hidden = false;
+    }
+
+    /**
+     * Close the modal
+     */
+    function closeModal() {
+        elements.blockModal.hidden = true;
+        editingBlockId = null;
+    }
+
+    /**
+     * Handle block form submit
+     */
+    async function handleBlockFormSubmit(e) {
+        e.preventDefault();
+
+        const block = blocks.find(b => b.id === editingBlockId);
+        if (!block || block.fromCalendar) {
+            closeModal();
+            return;
         }
 
-        /**
-         * Open the block edit modal
-         */
-        function openModal(block) {
-            editingBlockId = block.id;
+        if (block.isRoutine) {
+            // For routines: hide the original, create a new local block with changes
+            hideRoutine(formatDateStr(currentDate), block.id);
 
-            elements.blockTitle.value = block.title;
-            elements.blockStart.value = block.startTime;
-            elements.blockEnd.value = block.endTime;
-            elements.blockNotes.value = block.notes || '';
-
-            // Set category
-            elements.categoryPicker.querySelectorAll('.category-btn').forEach(btn => {
-                btn.classList.toggle('selected', btn.dataset.category === block.category);
-            });
-
-            // Hide delete button for calendar events only
-            elements.deleteBlockBtn.style.display = block.fromCalendar ? 'none' : 'block';
-
-            // Disable form for calendar events only
-            const isCalendarEvent = block.fromCalendar;
-            elements.blockTitle.disabled = isCalendarEvent;
-            elements.blockStart.disabled = isCalendarEvent;
-            elements.blockEnd.disabled = isCalendarEvent;
-            elements.categoryPicker.querySelectorAll('.category-btn').forEach(btn => {
-                btn.disabled = isCalendarEvent;
-            });
-
-            elements.blockModal.hidden = false;
-        }
-
-        /**
-         * Close the modal
-         */
-        function closeModal() {
-            elements.blockModal.hidden = true;
-            editingBlockId = null;
-        }
-
-        /**
-         * Handle block form submit
-         */
-        async function handleBlockFormSubmit(e) {
-            e.preventDefault();
-
-            const block = blocks.find(b => b.id === editingBlockId);
-            if (!block || block.fromCalendar) {
-                closeModal();
-                return;
-            }
-
-            if (block.isRoutine) {
-                // For routines: hide the original, create a new local block with changes
-                hideRoutine(formatDateStr(currentDate), block.id);
-
-                const newBlock = {
-                    id: Storage.generateId(),
-                    date: formatDateStr(currentDate),
-                    title: elements.blockTitle.value,
-                    startTime: elements.blockStart.value,
-                    endTime: elements.blockEnd.value,
-                    notes: elements.blockNotes.value,
-                    category: block.category,
-                    fromCalendar: false
-                };
-                const selectedCategory = elements.categoryPicker.querySelector('.category-btn.selected');
-                if (selectedCategory) newBlock.category = selectedCategory.dataset.category;
-
-                await Storage.saveBlock(newBlock);
-                localBlocks.push(newBlock);
-                await loadDate(currentDate);
-                triggerAutoSave();
-                closeModal();
-                return;
-            }
-
-            // Update regular block
-            block.title = elements.blockTitle.value;
-            block.startTime = elements.blockStart.value;
-            block.endTime = elements.blockEnd.value;
-            block.notes = elements.blockNotes.value;
-
+            const newBlock = {
+                id: Storage.generateId(),
+                date: formatDateStr(currentDate),
+                title: elements.blockTitle.value,
+                startTime: elements.blockStart.value,
+                endTime: elements.blockEnd.value,
+                notes: elements.blockNotes.value,
+                category: block.category,
+                fromCalendar: false
+            };
             const selectedCategory = elements.categoryPicker.querySelector('.category-btn.selected');
-            if (selectedCategory) {
-                block.category = selectedCategory.dataset.category;
-            }
+            if (selectedCategory) newBlock.category = selectedCategory.dataset.category;
 
-            await Storage.saveBlock(block);
-            renderBlocks();
-            triggerAutoSave();
-            closeModal();
-        }
-
-        /**
-         * Handle delete block
-         */
-        async function handleDeleteBlock() {
-            const block = blocks.find(b => b.id === editingBlockId);
-            if (!block || block.fromCalendar) {
-                closeModal();
-                return;
-            }
-
-            if (block.isRoutine) {
-                // Hide routine for this day
-                hideRoutine(formatDateStr(currentDate), block.id);
-                await loadDate(currentDate);
-                closeModal();
-                return;
-            }
-
-            await Storage.deleteBlock(block.id);
-            localBlocks = localBlocks.filter(b => b.id !== block.id);
+            await Storage.saveBlock(newBlock);
+            localBlocks.push(newBlock);
             await loadDate(currentDate);
             triggerAutoSave();
             closeModal();
+            return;
         }
 
-        /**
-         * Get hidden routine IDs for a date
-         */
-        function getHiddenRoutines(dateStr) {
-            try {
-                return JSON.parse(localStorage.getItem('hiddenRoutines_' + dateStr) || '[]');
-            } catch {
-                return [];
-            }
+        // Update regular block
+        block.title = elements.blockTitle.value;
+        block.startTime = elements.blockStart.value;
+        block.endTime = elements.blockEnd.value;
+        block.notes = elements.blockNotes.value;
+
+        const selectedCategory = elements.categoryPicker.querySelector('.category-btn.selected');
+        if (selectedCategory) {
+            block.category = selectedCategory.dataset.category;
         }
 
-        /**
-         * Hide a routine for a specific date
-         */
-        function hideRoutine(dateStr, routineId) {
-            const hidden = getHiddenRoutines(dateStr);
-            if (!hidden.includes(routineId)) {
-                hidden.push(routineId);
-                localStorage.setItem('hiddenRoutines_' + dateStr, JSON.stringify(hidden));
-            }
+        await Storage.saveBlock(block);
+        renderBlocks();
+        triggerAutoSave();
+        closeModal();
+    }
+
+    /**
+     * Handle delete block
+     */
+    async function handleDeleteBlock() {
+        const block = blocks.find(b => b.id === editingBlockId);
+        if (!block || block.fromCalendar) {
+            closeModal();
+            return;
         }
 
-        /**
-         * Update current time indicator - VERTICAL line based on current time
-         */
-        function updateCurrentTimeIndicator() {
-            // Remove existing indicator
-            const existing = document.querySelector('.current-time-indicator');
-            if (existing) existing.remove();
-
-            // Only show for today
-            const today = new Date();
-            if (formatDateStr(today) !== formatDateStr(currentDate)) return;
-
-            const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
-
-            // Only show during grid hours
-            if (hours < TimeBlocks.GRID_START_HOUR || hours > TimeBlocks.GRID_END_HOUR) return;
-
-            // Find the current hour row
-            const currentRow = elements.timegrid.querySelector(`[data-hour="${hours}"]`);
-            if (!currentRow) return;
-
-            const slotCells = currentRow.querySelectorAll('.time-slot');
-            if (slotCells.length === 0) return;
-
-            const cellWidth = slotCells[0].offsetWidth;
-
-            // Calculate position within the row
-            const slotIndex = Math.floor(minutes / 15); // 0-3
-            const minutesInSlot = minutes % 15;
-            const percentInSlot = minutesInSlot / 15;
-
-            // Left position relative to the time label = (slot index + percent in slot) * cell width
-            const leftPosition = (slotIndex + percentInSlot) * cellWidth;
-
-            const indicator = document.createElement('div');
-            indicator.className = 'current-time-indicator';
-            indicator.style.left = `${leftPosition}px`;
-
-            // Append to the row's slot area (after the time label)
-            currentRow.style.position = 'relative';
-            currentRow.appendChild(indicator);
+        if (block.isRoutine) {
+            // Hide routine for this day
+            hideRoutine(formatDateStr(currentDate), block.id);
+            await loadDate(currentDate);
+            closeModal();
+            return;
         }
 
-        // Initialize when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
+        await Storage.deleteBlock(block.id);
+        localBlocks = localBlocks.filter(b => b.id !== block.id);
+        await loadDate(currentDate);
+        triggerAutoSave();
+        closeModal();
+    }
+
+    /**
+     * Get hidden routine IDs for a date
+     */
+    function getHiddenRoutines(dateStr) {
+        try {
+            return JSON.parse(localStorage.getItem('hiddenRoutines_' + dateStr) || '[]');
+        } catch {
+            return [];
         }
-    }) ();
+    }
+
+    /**
+     * Hide a routine for a specific date
+     */
+    function hideRoutine(dateStr, routineId) {
+        const hidden = getHiddenRoutines(dateStr);
+        if (!hidden.includes(routineId)) {
+            hidden.push(routineId);
+            localStorage.setItem('hiddenRoutines_' + dateStr, JSON.stringify(hidden));
+        }
+    }
+
+    /**
+     * Update current time indicator - VERTICAL line based on current time
+     */
+    function updateCurrentTimeIndicator() {
+        // Remove existing indicator
+        const existing = document.querySelector('.current-time-indicator');
+        if (existing) existing.remove();
+
+        // Only show for today
+        const today = new Date();
+        if (formatDateStr(today) !== formatDateStr(currentDate)) return;
+
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+
+        // Only show during grid hours
+        if (hours < TimeBlocks.GRID_START_HOUR || hours > TimeBlocks.GRID_END_HOUR) return;
+
+        // Find the current hour row
+        const currentRow = elements.timegrid.querySelector(`[data-hour="${hours}"]`);
+        if (!currentRow) return;
+
+        const slotCells = currentRow.querySelectorAll('.time-slot');
+        if (slotCells.length === 0) return;
+
+        const cellWidth = slotCells[0].offsetWidth;
+
+        // Calculate position within the row
+        const slotIndex = Math.floor(minutes / 15); // 0-3
+        const minutesInSlot = minutes % 15;
+        const percentInSlot = minutesInSlot / 15;
+
+        // Left position relative to the time label = (slot index + percent in slot) * cell width
+        const leftPosition = (slotIndex + percentInSlot) * cellWidth;
+
+        const indicator = document.createElement('div');
+        indicator.className = 'current-time-indicator';
+        indicator.style.left = `${leftPosition}px`;
+
+        // Append to the row's slot area (after the time label)
+        currentRow.style.position = 'relative';
+        currentRow.appendChild(indicator);
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
