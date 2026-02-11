@@ -1,8 +1,8 @@
 /**
  * app.js - Main application logic
- * Version: 0.77
+ * Version: 0.78
  */
-console.log('Timeboxing App v0.77 loaded');
+console.log('Timeboxing App v0.78 loaded');
 // alert('App Updated to v64'); // Uncomment if needed, but the button should be enough
 
 (function () {
@@ -217,6 +217,17 @@ console.log('Timeboxing App v0.77 loaded');
             }
         });
 
+        // Quick Sync
+        const quickSyncBtn = document.getElementById('quick-sync-btn');
+        if (quickSyncBtn) {
+            quickSyncBtn.addEventListener('click', async () => {
+                const icon = quickSyncBtn.querySelector('svg');
+                icon.classList.add('rotating');
+                await syncFromDrive();
+                icon.classList.remove('rotating');
+            });
+        }
+
         // SYNC FIX: Auto-sync when app comes into foreground
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible' && Calendar.getSignedInStatus()) {
@@ -231,6 +242,14 @@ console.log('Timeboxing App v0.77 loaded');
                 syncFromDrive();
             }
         });
+
+        // Periodic Background Sync (Every 5 minutes)
+        setInterval(() => {
+            if (Calendar.getSignedInStatus() && document.visibilityState === 'visible') {
+                console.log('Periodic sync check...');
+                syncFromDrive();
+            }
+        }, 5 * 60 * 1000);
     }
 
     // Sync state
