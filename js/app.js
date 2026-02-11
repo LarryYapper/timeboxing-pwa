@@ -1,8 +1,8 @@
 /**
  * app.js - Main application logic
- * Version: 0.64
+ * Version: 0.66
  */
-console.log('Timeboxing App v0.64 loaded');
+console.log('Timeboxing App v0.66 loaded');
 // alert('App Updated to v64'); // Uncomment if needed, but the button should be enough
 
 (function () {
