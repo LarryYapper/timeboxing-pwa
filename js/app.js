@@ -210,6 +210,21 @@
                 closeModal();
             }
         });
+
+        // SYNC FIX: Auto-sync when app comes into foreground
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && Calendar.getSignedInStatus()) {
+                console.log('App visible, checking for updates...');
+                syncFromDrive();
+            }
+        });
+
+        window.addEventListener('focus', () => {
+            if (Calendar.getSignedInStatus()) {
+                console.log('Window focused, checking for updates...');
+                syncFromDrive();
+            }
+        });
     }
 
     // Sync state
@@ -381,13 +396,19 @@
         btn.classList.add('rotating');
 
         try {
+            // SYNC FIX: Pull AppData (tasks) first!
+            await syncFromDrive();
+
+            // Then load events/local data
             await loadDate(currentDate);
+
             // Check if we found any events
             const eventCount = calendarBlocks.length;
             if (eventCount > 0) {
-                alert(`Synchronizace dokončena. Nalezeno ${eventCount} událostí.`);
+                // Modified alert to confirm task sync too
+                alert(`Synchronizace dokončena. Data úkolů aktualizována. Nalezeno ${eventCount} událostí kalendáře.`);
             } else {
-                alert('Synchronizace dokončena, ale pro tento den nebyly nalezeny žádné události.');
+                alert('Synchronizace dokončena. Data úkolů aktualizována.');
             }
         } catch (error) {
             console.error('Sync failed:', error);
