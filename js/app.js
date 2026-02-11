@@ -1,8 +1,8 @@
 /**
  * app.js - Main application logic
- * Version: 0.74
+ * Version: 0.75
  */
-console.log('Timeboxing App v0.74 loaded');
+console.log('Timeboxing App v0.75 loaded');
 // alert('App Updated to v64'); // Uncomment if needed, but the button should be enough
 
 (function () {
@@ -1013,6 +1013,7 @@ console.log('Timeboxing App v0.74 loaded');
         if (!hidden.includes(routineId)) {
             hidden.push(routineId);
             localStorage.setItem('hiddenRoutines_' + dateStr, JSON.stringify(hidden));
+            triggerAutoSave(); // Trigger sync
         }
     }
 
