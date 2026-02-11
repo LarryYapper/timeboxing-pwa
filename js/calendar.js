@@ -199,6 +199,10 @@ const Calendar = (function () {
     async function saveData(data) {
         if (!isSignedIn) return;
         try {
+            const dataStr = JSON.stringify(data);
+            console.log(`Debug: Saving ${dataStr.length} bytes to Drive`);
+            // alert(`Debug: Uploading ${dataStr.length} bytes...`); // Optional: annoying but useful
+
             const fileId = await findDataFile();
 
             if (fileId) {
@@ -208,10 +212,10 @@ const Calendar = (function () {
                     path: `/upload/drive/v3/files/${fileId}`,
                     method: 'PATCH',
                     params: { uploadType: 'media' },
-                    body: JSON.stringify(data)
+                    body: dataStr
                 });
             } else {
-                // CREATE (POST): Use multipart to set metadata + content
+                // CREATE (POST): Use multipart
                 const boundary = '-------314159265358979323846';
                 const delimiter = "\r\n--" + boundary + "\r\n";
                 const close_delim = "\r\n--" + boundary + "--";
@@ -229,7 +233,7 @@ const Calendar = (function () {
                     JSON.stringify(metadata) +
                     delimiter +
                     'Content-Type: ' + contentType + '\r\n\r\n' +
-                    JSON.stringify(data) +
+                    dataStr +
                     close_delim;
 
                 await gapi.client.request({
@@ -266,7 +270,21 @@ const Calendar = (function () {
                 alt: 'media'
             });
 
-            return response.result;
+            if (response.status === 200) {
+                // Debug log
+                const data = response.result; // gapi parses JSON auto?
+                // If response.body is string, parse it. 
+                // gapi.client usually returns JSON object in .result if content-type is json
+                // But for alt=media... let's check.
+                // Actually gapi handles it.
+
+                const size = JSON.stringify(data).length;
+                console.log(`Debug: Loaded ${size} bytes from Drive`);
+                // alert(`Debug: Downloaded ${size} bytes.`);
+
+                return data;
+            }
+            return null;
         } catch (err) {
             console.error('Error loading from Drive:', err);
             if (err.status === 401) handleAuthError();
