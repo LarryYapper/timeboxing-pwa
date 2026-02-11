@@ -1,8 +1,8 @@
 /**
  * app.js - Main application logic
- * Version: 0.78
+ * Version: 0.79
  */
-console.log('Timeboxing App v0.78 loaded');
+console.log('Timeboxing App v0.79 loaded');
 // alert('App Updated to v64'); // Uncomment if needed, but the button should be enough
 
 (function () {
@@ -221,10 +221,46 @@ console.log('Timeboxing App v0.78 loaded');
         const quickSyncBtn = document.getElementById('quick-sync-btn');
         if (quickSyncBtn) {
             quickSyncBtn.addEventListener('click', async () => {
+                console.log('Quick Sync clicked');
                 const icon = quickSyncBtn.querySelector('svg');
-                icon.classList.add('rotating');
-                await syncFromDrive();
-                icon.classList.remove('rotating');
+                if (icon) icon.classList.add('rotating');
+
+                try {
+                    await syncFromDrive();
+                } catch (e) {
+                    console.error('Quick sync failed:', e);
+                } finally {
+                    if (icon) icon.classList.remove('rotating');
+                }
+            });
+        } else {
+            console.error('Quick sync button not found in DOM');
+        }
+
+        // CLICK-TO-TIME: Handle clicks on empty slots
+        if (elements.timegrid) {
+            elements.timegrid.addEventListener('click', (e) => {
+                // Ignore if clicked on a block (handled by block click listener)
+                if (e.target.closest('.time-block-fill')) return;
+
+                const slot = e.target.closest('.time-slot');
+                if (slot) {
+                    const time = slot.dataset.time;
+                    if (time) {
+                        // Open smart input
+                        const container = document.querySelector('.smart-input-container');
+                        if (container.style.display === 'none') {
+                            container.style.display = 'block';
+                        }
+
+                        // Set value to time + space
+                        elements.smartInput.value = `${time} `;
+                        elements.smartInput.focus();
+
+                        // Provide visual feedback (optional)
+                        console.log(`Slot clicked: ${time}`);
+                    }
+                }
             });
         }
 
