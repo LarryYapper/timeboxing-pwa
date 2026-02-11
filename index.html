@@ -26,13 +26,13 @@
 <body>
     <button id="debug-btn-fixed"
         style="position: fixed; top: 10px; left: 10px; z-index: 9999; padding: 10px; background: red; color: white;">
-        DEBUG V69
+        DEBUG V70
     </button>
     <div class="app-container">
         <!-- Header -->
         <header class="header">
             <div class="header-compact">
-                <h1 class="logo">Timeboxing v68</h1>
+                <h1 class="logo">Timeboxing v70</h1>
 
                 <div class="date-compact">
                     <button id="prev-day" class="btn btn-icon btn-sm" aria-label="Předchozí den">
@@ -191,7 +191,7 @@
         </div>
     </div>
     <footer style="text-align: center; font-size: 10px; color: #888; margin-top: 20px; padding-bottom: 10px;">
-        Timeboxing v69
+        Timeboxing v70
     </footer>
     </div>
 
@@ -201,13 +201,13 @@
     <script src="js/smartinput.js?v=40"></script>
     <script src="js/timeblocks.js?v=45"></script>
     <script src="js/calendar.js?v=30"></script>
-    <script src="js/app.js?v=69"></script>
+    <script src="js/app.js?v=70"></script>
 
     <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=65')
+                navigator.serviceWorker.register('sw.js?v=70')
                     .then(reg => console.log('SW registered'))
                     .catch(err => console.log('SW registration failed:', err));
             });

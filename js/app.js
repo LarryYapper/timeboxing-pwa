@@ -1,8 +1,8 @@
 /**
  * app.js - Main application logic
- * Version: 0.69
+ * Version: 0.70
  */
-console.log('Timeboxing App v0.69 loaded');
+console.log('Timeboxing App v0.70 loaded');
 // alert('App Updated to v64'); // Uncomment if needed, but the button should be enough
 
 (function () {
@@ -705,8 +705,16 @@ console.log('Timeboxing App v0.69 loaded');
      * Render all blocks
      */
     function renderBlocks() {
-        const container = elements.timegrid.querySelector('.blocks-container');
+        // Render main grid
         TimeBlocks.render(blocks);
+
+        // Render all-day events
+        // calendarBlocks is a global variable updated in loadDate
+        if (calendarBlocks && calendarBlocks.allDayEvents) {
+            TimeBlocks.renderAllDay(calendarBlocks.allDayEvents);
+        } else {
+            TimeBlocks.renderAllDay([]);
+        }
     }
 
     /**
