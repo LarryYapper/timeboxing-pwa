@@ -1,8 +1,8 @@
 /**
  * app.js - Main application logic
- * Version: 0.79
+ * Version: 0.80
  */
-console.log('Timeboxing App v0.79 loaded');
+console.log('Timeboxing App v0.80 loaded');
 // alert('App Updated to v64'); // Uncomment if needed, but the button should be enough
 
 (function () {
@@ -20,7 +20,6 @@ console.log('Timeboxing App v0.79 loaded');
         '#11326B', // Admin (Blue)
         '#326663', // Creative (Teal)
         '#724431', // Other (Brown)
-        '#090909', // Deep Work (Black)
         '#e37400'  // Energy (Darker Orange)
     ];
 
