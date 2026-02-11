@@ -173,6 +173,7 @@ const Storage = (function () {
             const backup = {
                 blocks: [],
                 settings: [],
+                hiddenRoutines: {}, // NEW: Store hidden routines map
                 timestamp: Date.now()
             };
 
@@ -183,6 +184,13 @@ const Storage = (function () {
             settingsStore.getAll().onsuccess = (e) => {
                 backup.settings = e.target.result;
             };
+
+            // Export hidden routines from localStorage
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('hiddenRoutines_')) {
+                    backup.hiddenRoutines[key] = localStorage.getItem(key);
+                }
+            });
 
             transaction.oncomplete = () => resolve(backup);
             transaction.onerror = () => reject(transaction.error);
@@ -211,6 +219,13 @@ const Storage = (function () {
             data.blocks.forEach(block => blocksStore.put(block));
             if (data.settings) {
                 data.settings.forEach(setting => settingsStore.put(setting));
+            }
+
+            // Restore hidden routines to localStorage
+            if (data.hiddenRoutines) {
+                Object.entries(data.hiddenRoutines).forEach(([key, value]) => {
+                    localStorage.setItem(key, value);
+                });
             }
 
             transaction.oncomplete = () => resolve(true);
