@@ -204,53 +204,48 @@ const Calendar = (function () {
 
             const fileId = await findDataFile();
 
-            if (fileId) {
-                // UPDATE (PATCH): Use simple 'media' upload
-                // This is much more robust than multipart for just content updates
-                await gapi.client.request({
-                    path: `/upload/drive/v3/files/${fileId}`,
-                    method: 'PATCH',
-                    params: { uploadType: 'media' },
-                    headers: { 'Content-Type': 'application/json' },
-                    body: dataStr
-                });
-            } else {
-                // CREATE (POST): Use multipart
-                const boundary = '-------314159265358979323846';
-                const delimiter = "\r\n--" + boundary + "\r\n";
-                const close_delim = "\r\n--" + boundary + "--";
+            const boundary = '-------314159265358979323846';
+            const delimiter = "\r\n--" + boundary + "\r\n";
+            const close_delim = "\r\n--" + boundary + "--";
 
-                const contentType = 'application/json';
-                const metadata = {
-                    'name': DATA_FILENAME,
-                    'mimeType': contentType,
-                    'parents': ['appDataFolder']
-                };
+            const contentType = 'application/json';
 
-                const multipartRequestBody =
-                    delimiter +
-                    'Content-Type: application/json\r\n\r\n' +
-                    JSON.stringify(metadata) +
-                    delimiter +
-                    'Content-Type: ' + contentType + '\r\n\r\n' +
-                    dataStr +
-                    close_delim;
+            // Build metadata
+            // For update, we might not strictly need 'name' or 'parents', but it's harmless
+            const metadata = {
+                'mimeType': contentType
+            };
 
-                await gapi.client.request({
-                    'path': '/upload/drive/v3/files',
-                    'method': 'POST',
-                    'params': { 'uploadType': 'multipart' },
-                    'headers': {
-                        'Content-Type': 'multipart/related; boundary="' + boundary + '"'
-                    },
-                    'body': multipartRequestBody
-                });
+            if (!fileId) {
+                // Only needed for creation
+                metadata.name = DATA_FILENAME;
+                metadata.parents = ['appDataFolder'];
             }
 
+            const multipartRequestBody =
+                delimiter +
+                'Content-Type: application/json\r\n\r\n' +
+                JSON.stringify(metadata) +
+                delimiter +
+                'Content-Type: ' + contentType + '\r\n\r\n' +
+                dataStr +
+                close_delim;
+
+            await gapi.client.request({
+                path: fileId ? `/upload/drive/v3/files/${fileId}` : '/upload/drive/v3/files',
+                method: fileId ? 'PATCH' : 'POST',
+                params: { 'uploadType': 'multipart' },
+                headers: {
+                    'Content-Type': 'multipart/related; boundary="' + boundary + '"'
+                },
+                body: multipartRequestBody
+            });
+
             console.log('Data saved to Drive successfully');
-            return true;
+            return true; // Return true to indicate success
         } catch (err) {
             console.error('Error saving to Drive:', err);
+            // Re-throw so caller knows it failed
             if (err.status === 401) handleAuthError();
             throw err;
         }

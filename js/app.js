@@ -445,7 +445,16 @@
                 remoteDebugInfo);
         } catch (error) {
             console.error('Sync failed:', error);
-            alert('Synchronizace selhala. Zkuste se odhlásit a znovu přihlásit.');
+
+            // Extract detailed error message if available
+            let errorMsg = 'Synchronizace selhala.';
+            if (error.result && error.result.error && error.result.error.message) {
+                errorMsg += '\nDetails: ' + error.result.error.message;
+            } else if (error.message) {
+                errorMsg += '\nError: ' + error.message;
+            }
+
+            alert(errorMsg + '\nZkuste se odhlásit a znovu přihlásit.');
         } finally {
             // Keep spinning a bit longer for visual feedback
             setTimeout(() => {
