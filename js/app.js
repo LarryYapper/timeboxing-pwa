@@ -433,9 +433,16 @@
             // Check if we found any events
             const eventCount = calendarBlocks.length;
 
+            // Debug info
+            const remoteDebugInfo = remoteData && remoteData._debugFileId
+                ? `\nFile: ...${remoteData._debugFileId.slice(-4)}`
+                : '';
+            const remoteBlockCount = remoteData && remoteData.blocks ? remoteData.blocks.length : 'N/A';
+
             alert(`Synchronizace OK!\n\n` +
-                `Místní úkoly: ${localCount}\n` +
-                `Kalendář: ${eventCount} událostí`);
+                `Místní úkoly: ${localCount} (Remote: ${remoteBlockCount})\n` +
+                `Kalendář: ${eventCount} událostí` +
+                remoteDebugInfo);
         } catch (error) {
             console.error('Sync failed:', error);
             alert('Synchronizace selhala. Zkuste se odhlásit a znovu přihlásit.');

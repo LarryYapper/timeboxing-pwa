@@ -211,6 +211,7 @@ const Calendar = (function () {
                     path: `/upload/drive/v3/files/${fileId}`,
                     method: 'PATCH',
                     params: { uploadType: 'media' },
+                    headers: { 'Content-Type': 'application/json' },
                     body: dataStr
                 });
             } else {
@@ -272,13 +273,16 @@ const Calendar = (function () {
             if (response.status === 200) {
                 // Debug log
                 const data = response.result; // gapi parses JSON auto?
-                // If response.body is string, parse it. 
+                // If response.body is string, parse it.
                 // gapi.client usually returns JSON object in .result if content-type is json
                 // But for alt=media... let's check.
                 // Actually gapi handles it.
 
                 const size = JSON.stringify(data).length;
                 console.log(`Debug: Loaded ${size} bytes from Drive. Blocks: ${data.blocks ? data.blocks.length : 0}`);
+
+                // Return data AND fileId for debug
+                data._debugFileId = fileId;
                 return data;
             }
             return null;
