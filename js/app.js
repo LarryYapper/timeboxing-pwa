@@ -503,6 +503,7 @@ console.log('Timeboxing App v0.64 loaded');
     }
 
     // DEBUG BUTTON LISTENER
+    // DEBUG BUTTON LISTENER
     const debugBtn = document.getElementById('debug-btn-fixed') || document.getElementById('debug-btn');
     if (debugBtn) {
         debugBtn.addEventListener('click', async () => {
@@ -513,16 +514,35 @@ console.log('Timeboxing App v0.64 loaded');
 
             try {
                 const todayStr = formatDateStr(new Date());
-                alert(`DEBUG: Fetching events for TODAY (${todayStr})...`);
-                const events = await Calendar.getEventsForDate(todayStr);
-                alert(`DEBUG: Found ${events.length} events for TODAY.\nExample: ${events[0]?.title || 'none'}`);
+                alert(`DEBUG: finding calendars...`);
 
+                // Direct access to GAPI to debug calendars
+                const calList = await gapi.client.calendar.calendarList.list({ minAccessRole: 'reader' });
+                const calendars = calList.result.items || [];
+
+                let msg = `Found ${calendars.length} calendars:\n`;
+                calendars.forEach(c => msg += `- ${c.summary} (${c.accessRole})\n`);
+                alert(msg);
+
+                // Now fetch events for tomorrow
                 const tomorrow = new Date();
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 const tmrwStr = formatDateStr(tomorrow);
-                alert(`DEBUG: Fetching events for TOMORROW (${tmrwStr})...`);
-                const events2 = await Calendar.getEventsForDate(tmrwStr);
-                alert(`DEBUG: Found ${events2.length} events for TOMORROW.\nExample: ${events2[0]?.title || 'none'}`);
+
+                alert(`Fetching events for TOMORROW (${tmrwStr})...`);
+                const events = await Calendar.getEventsForDate(tmrwStr);
+
+                let details = `Total: ${events.length}\n`;
+                // Group by calendar
+                const counts = {};
+                events.forEach(e => {
+                    counts[e.calendarName] = (counts[e.calendarName] || 0) + 1;
+                });
+                for (const [name, count] of Object.entries(counts)) {
+                    details += `${name}: ${count}\n`;
+                }
+
+                alert(details);
 
             } catch (e) {
                 alert(`Debug Error: ${e.message}`);
