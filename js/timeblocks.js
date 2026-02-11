@@ -340,6 +340,13 @@ const TimeBlocks = (function () {
     function makeDraggable(el, block) {
         el.classList.add('draggable');
         el.addEventListener('pointerdown', (e) => onDragStart(e, block, el));
+
+        // Prevent context menu on long press (E-reader fix)
+        el.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        });
     }
 
     function onDragStart(e, block, el) {
@@ -350,7 +357,10 @@ const TimeBlocks = (function () {
         let holdActivated = false;
         let hasMoved = false;
         const slotCount = getBlockSlotCount(block);
-        const HOLD_DELAY = 400; // ms to hold before drag activates
+
+        // Dynamic delay: Short for Mouse (PC), Long for Touch (E-reader compatibility)
+        const isTouch = e.pointerType === 'touch' || e.pointerType === 'pen';
+        const HOLD_DELAY = isTouch ? 400 : 150;
 
         // Cancel hold if pointer moves too much before activation
         const onMoveBeforeHold = (moveEvent) => {
@@ -380,6 +390,9 @@ const TimeBlocks = (function () {
             // Visual feedback that drag is active
             el.style.opacity = '0.6';
 
+            // Vibration feedback for touch devices
+            if (navigator.vibrate) navigator.vibrate(50);
+
             document.addEventListener('pointermove', onDragMove);
             document.addEventListener('pointerup', onDragUp);
         }, HOLD_DELAY);
@@ -388,6 +401,7 @@ const TimeBlocks = (function () {
         document.addEventListener('pointerup', onUpBeforeHold);
 
         const onDragMove = (moveEvent) => {
+            // ... (rest of function logic)
             const dx = moveEvent.clientX - startX;
             const dy = moveEvent.clientY - startY;
 
@@ -397,7 +411,7 @@ const TimeBlocks = (function () {
                 ghost.className = 'drag-ghost';
                 ghost.textContent = block.title;
                 ghost.style.backgroundColor = getCategoryColor(block.category);
-                ghost.style.color = getTextColorForCategory(block.category);
+                ghost.style.color = getTextColorForCategory(block.category, ghost.style.backgroundColor);
                 ghost.style.width = el.offsetWidth + 'px';
                 ghost.style.height = el.offsetHeight + 'px';
                 document.body.appendChild(ghost);
@@ -459,7 +473,9 @@ const TimeBlocks = (function () {
             }
         };
 
-        e.preventDefault();
+        // Do NOT preventDefault here on pointerdown, it breaks scrolling/click?
+        // Actually we need it to stop text selection?
+        // Let's rely on CSS touch-action and user-select for that.
     }
 
     function highlightDropTarget(x, y) {

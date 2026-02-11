@@ -1023,7 +1023,13 @@ body {
 .time-block-content.draggable,
 .time-block-fill.draggable {
     cursor: grab;
-    touch-action: none;
+    /* Allow vertical scrolling, prevent horizontal/zoom */
+    touch-action: pan-y;
+    /* text selection blocking */
+    -webkit-user-select: none;
+    user-select: none;
+    /* Prevent iOS context menu */
+    -webkit-touch-callout: none;
 }
 
 .time-block-content.draggable:active,
