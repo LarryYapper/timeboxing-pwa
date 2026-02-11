@@ -250,139 +250,155 @@
     /**
      * Sync data from Drive
      */
-    async function syncFromDrive() {
-        if (isSyncing) return;
-        isSyncing = true;
-        showSyncStatus('Syncing...', 'normal');
-
-        try {
-            const remoteData = await Calendar.loadData();
-            if (remoteData) {
-                // SYNC FIX: Merge data (overwrite=false) instead of replacing (overwrite=true)
-                // This prevents losing local changes that haven't been pushed yet
-                await Storage.importBackup(remoteData, false);
-                console.log('Synced from Drive (Merged)');
-
-                await loadDate(currentDate); // Reload UI
-
-                // Debug alert for user
-                const remoteCount = remoteData.blocks ? remoteData.blocks.length : 0;
-                // Note: currentBlocks is updated by loadDate, but might just be for current day.
-                // We want TOTAL blocks in DB? Storage.getBlocksByDate only gets one day.
-                // We'll just show remote count for now.
-                showSyncStatus(`Synced: ${remoteCount} tasks`, 'success');
-                // alert(`Sync Debug: Pulled ${remoteCount} tasks from Drive.`);
-            } else {
-                console.log('No remote data found, first sync?');
-                triggerAutoSave();
-            }
-        } catch (e) {
-            console.error('Sync failed', e);
-            showSyncStatus('Sync Error', 'error');
-        } finally {
-            isSyncing = false;
-            setTimeout(hideSyncStatus, 3000);
-        }
+    if (response.status === 200) {
+        // ...
+        return data;
+    }
+    return null;
+} catch (err) {
+    // ...
+    return null;
+}
     }
 
-    /**
-     * Trigger auto-save to Drive
-     * @param {boolean} force - If true, skip debounce and save immediately
-     */
-    async function triggerAutoSave(force = false) {
-        if (!Calendar.getSignedInStatus()) return;
+// ... inside app.js ...
 
-        if (saveTimeout) clearTimeout(saveTimeout);
-        showSyncStatus('Saving...', 'normal');
+async function syncFromDrive() {
+    if (isSyncing) return null;
+    isSyncing = true;
+    showSyncStatus('Syncing...', 'normal');
 
-        const saveOperation = async () => {
-            try {
-                const data = await Storage.exportBackup();
-                // Debug log
-                console.log(`Saving ${data.blocks.length} blocks to Drive...`);
+    try {
+        const remoteData = await Calendar.loadData();
+        if (remoteData) {
+            await Storage.importBackup(remoteData, false);
+            console.log('Synced from Drive (Merged)');
+            await loadDate(currentDate);
+            showSyncStatus(`Synced`, 'success');
+            return remoteData; // RETURN DATA
+        } else {
+            console.log('No remote data found');
+            triggerAutoSave();
+            return null;
+        }
+    } catch (e) {
+        console.error('Sync failed', e);
+        showSyncStatus('Sync Error', 'error');
+        throw e; // RETHROW for handleSyncCalendar to catch
+    } finally {
+        isSyncing = false;
+        setTimeout(hideSyncStatus, 3000);
+    }
+}
 
-                await Calendar.saveData(data);
-                showSyncStatus('Saved', 'success');
-            } catch (e) {
-                console.error('Save failed', e);
-                // Handle auth errors gracefully
-                if (e.status === 401 || e.status === 403) {
-                    showSyncStatus('Sync Paused', 'warning');
-                } else if (!navigator.onLine) {
-                    showSyncStatus('Offline', 'warning');
-                } else {
-                    showSyncStatus('Save Error', 'error');
+// ...
+
+async function handleSyncCalendar() {
+    // ...
+    try {
+        // STEP 1: Pull AppData (tasks) - Merge remote changes
+        const remoteData = await syncFromDrive(); // CAPTURE DATA
+
+        // ...
+
+        /**
+         * Trigger auto-save to Drive
+         * @param {boolean} force - If true, skip debounce and save immediately
+         */
+        async function triggerAutoSave(force = false) {
+            if (!Calendar.getSignedInStatus()) return;
+
+            if (saveTimeout) clearTimeout(saveTimeout);
+            showSyncStatus('Saving...', 'normal');
+
+            const saveOperation = async () => {
+                try {
+                    const data = await Storage.exportBackup();
+                    // Debug log
+                    console.log(`Saving ${data.blocks.length} blocks to Drive...`);
+
+                    await Calendar.saveData(data);
+                    showSyncStatus('Saved', 'success');
+                } catch (e) {
+                    console.error('Save failed', e);
+                    // Handle auth errors gracefully
+                    if (e.status === 401 || e.status === 403) {
+                        showSyncStatus('Sync Paused', 'warning');
+                    } else if (!navigator.onLine) {
+                        showSyncStatus('Offline', 'warning');
+                    } else {
+                        showSyncStatus('Save Error', 'error');
+                    }
+                } finally {
+                    setTimeout(hideSyncStatus, 3000);
                 }
-            } finally {
-                setTimeout(hideSyncStatus, 3000);
+            };
+
+            if (force) {
+                return saveOperation();
+            } else {
+                saveTimeout = setTimeout(saveOperation, 2000);
+                return Promise.resolve();
             }
-        };
-
-        if (force) {
-            return saveOperation();
-        } else {
-            saveTimeout = setTimeout(saveOperation, 2000);
-            return Promise.resolve();
-        }
-    }
-
-    // Helper for visual feedback
-    function showSyncStatus(msg, type) {
-        let badge = document.getElementById('sync-status-badge');
-        if (!badge) {
-            badge = document.createElement('div');
-            badge.id = 'sync-status-badge';
-            badge.style.position = 'fixed';
-            badge.style.bottom = '20px';
-            badge.style.right = '20px';
-            badge.style.padding = '8px 12px';
-            badge.style.borderRadius = '20px';
-            badge.style.fontSize = '12px';
-            badge.style.fontWeight = '500';
-            badge.style.zIndex = '1000';
-            badge.style.transition = 'opacity 0.3s';
-            document.body.appendChild(badge);
         }
 
-        badge.textContent = msg;
-        badge.style.opacity = '1';
+        // Helper for visual feedback
+        function showSyncStatus(msg, type) {
+            let badge = document.getElementById('sync-status-badge');
+            if (!badge) {
+                badge = document.createElement('div');
+                badge.id = 'sync-status-badge';
+                badge.style.position = 'fixed';
+                badge.style.bottom = '20px';
+                badge.style.right = '20px';
+                badge.style.padding = '8px 12px';
+                badge.style.borderRadius = '20px';
+                badge.style.fontSize = '12px';
+                badge.style.fontWeight = '500';
+                badge.style.zIndex = '1000';
+                badge.style.transition = 'opacity 0.3s';
+                document.body.appendChild(badge);
+            }
 
-        if (type === 'error') {
-            badge.style.backgroundColor = 'var(--color-danger)';
-            badge.style.color = '#fff';
-        } else if (type === 'success') {
-            badge.style.backgroundColor = 'var(--color-success)';
-            badge.style.color = '#fff';
-        } else {
-            badge.style.backgroundColor = 'var(--color-surface)';
-            badge.style.color = 'var(--color-text)';
-            badge.style.border = '1px solid var(--color-border)';
+            badge.textContent = msg;
+            badge.style.opacity = '1';
+
+            if (type === 'error') {
+                badge.style.backgroundColor = 'var(--color-danger)';
+                badge.style.color = '#fff';
+            } else if (type === 'success') {
+                badge.style.backgroundColor = 'var(--color-success)';
+                badge.style.color = '#fff';
+            } else {
+                badge.style.backgroundColor = 'var(--color-surface)';
+                badge.style.color = 'var(--color-text)';
+                badge.style.border = '1px solid var(--color-border)';
+            }
         }
-    }
 
-    function hideSyncStatus() {
-        const badge = document.getElementById('sync-status-badge');
-        if (badge) badge.style.opacity = '0';
-    }
+        function hideSyncStatus() {
+            const badge = document.getElementById('sync-status-badge');
+            if (badge) badge.style.opacity = '0';
+        }
 
-    /**
-     * Handle Google sign in/out state change
-     */
-    function handleSignInChange(signedIn) {
-        const btn = elements.googleSigninBtn;
-        // ... (rest of logic same as before but ensured here)
-        if (signedIn) {
-            btn.innerHTML = `
+        /**
+         * Handle Google sign in/out state change
+         */
+        function handleSignInChange(signedIn) {
+            const btn = elements.googleSigninBtn;
+            // ... (rest of logic same as before but ensured here)
+            if (signedIn) {
+                btn.innerHTML = `
                 <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
                     <path fill="#34A853" d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
                 </svg>
                 <span>Připojeno</span>
             `;
-            btn.classList.add('connected');
-            loadDate(currentDate);
-            elements.syncCalendarBtn.hidden = false;
-        } else {
-            btn.innerHTML = `
+                btn.classList.add('connected');
+                loadDate(currentDate);
+                elements.syncCalendarBtn.hidden = false;
+            } else {
+                btn.innerHTML = `
                 <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -391,469 +407,469 @@
                 </svg>
                 <span>Přihlásit se</span>
             `;
-            btn.classList.remove('connected');
-            elements.syncCalendarBtn.hidden = true;
+                btn.classList.remove('connected');
+                elements.syncCalendarBtn.hidden = true;
+            }
         }
-    }
 
-    /**
-     * Handle Google sign in button click
-     */
-    function handleGoogleSignIn() {
-        if (Calendar.getSignedInStatus()) {
-            Calendar.signOut();
-        } else {
-            Calendar.signIn();
+        /**
+         * Handle Google sign in button click
+         */
+        function handleGoogleSignIn() {
+            if (Calendar.getSignedInStatus()) {
+                Calendar.signOut();
+            } else {
+                Calendar.signIn();
+            }
         }
-    }
 
-    /**
-     * Handle manual calendar sync
-     */
-    async function handleSyncCalendar() {
-        if (!Calendar.getSignedInStatus()) return;
+        /**
+         * Handle manual calendar sync
+         */
+        async function handleSyncCalendar() {
+            if (!Calendar.getSignedInStatus()) return;
 
-        const btn = elements.syncCalendarBtn;
-        btn.classList.add('rotating');
+            const btn = elements.syncCalendarBtn;
+            btn.classList.add('rotating');
 
-        try {
-            // STEP 1: Pull AppData (tasks) - Merge remote changes
-            await syncFromDrive();
+            try {
+                // STEP 1: Pull AppData (tasks) - Merge remote changes
+                const remoteData = await syncFromDrive();
 
-            // STEP 2: Force Push Local Data - Ensure our changes are uploaded
-            await triggerAutoSave(true);
+                // STEP 2: Force Push Local Data - Ensure our changes are uploaded
+                await triggerAutoSave(true);
 
-            // STEP 3: Load events/local data for UI
-            await loadDate(currentDate);
+                // STEP 3: Load events/local data for UI
+                await loadDate(currentDate);
 
-            // Get total local blocks for debug
-            const exportData = await Storage.exportBackup();
-            const localCount = exportData.blocks.length;
+                // Get total local blocks for debug
+                const exportData = await Storage.exportBackup();
+                const localCount = exportData.blocks.length;
 
-            // Check if we found any events
-            const eventCount = calendarBlocks.length;
+                // Check if we found any events
+                const eventCount = calendarBlocks.length;
 
-            // Debug info
-            const remoteDebugInfo = remoteData && remoteData._debugFileId
-                ? `\nFile: ...${remoteData._debugFileId.slice(-4)}`
-                : '';
-            const remoteBlockCount = remoteData && remoteData.blocks ? remoteData.blocks.length : 'N/A';
+                // Debug info
+                const remoteDebugInfo = remoteData && remoteData._debugFileId
+                    ? `\nFile: ...${remoteData._debugFileId.slice(-4)}`
+                    : '';
+                const remoteBlockCount = remoteData && remoteData.blocks ? remoteData.blocks.length : 'N/A';
 
-            alert(`Synchronizace OK!\n\n` +
-                `Místní úkoly: ${localCount} (Remote: ${remoteBlockCount})\n` +
-                `Kalendář: ${eventCount} událostí` +
-                remoteDebugInfo);
-        } catch (error) {
-            console.error('Sync failed:', error);
+                alert(`Synchronizace OK!\n\n` +
+                    `Místní úkoly: ${localCount} (Remote: ${remoteBlockCount})\n` +
+                    `Kalendář: ${eventCount} událostí` +
+                    remoteDebugInfo);
+            } catch (error) {
+                console.error('Sync failed:', error);
 
-            // Extract detailed error message if available
-            let errorMsg = 'Synchronizace selhala.';
-            if (error.result && error.result.error && error.result.error.message) {
-                errorMsg += '\nDetails: ' + error.result.error.message;
-            } else if (error.message) {
-                errorMsg += '\nError: ' + error.message;
+                // Extract detailed error message if available
+                let errorMsg = 'Synchronizace selhala.';
+                if (error.result && error.result.error && error.result.error.message) {
+                    errorMsg += '\nDetails: ' + error.result.error.message;
+                } else if (error.message) {
+                    errorMsg += '\nError: ' + error.message;
+                }
+
+                alert(errorMsg + '\nZkuste se odhlásit a znovu přihlásit.');
+            } finally {
+                // Keep spinning a bit longer for visual feedback
+                setTimeout(() => {
+                    btn.classList.remove('rotating');
+                }, 500);
+            }
+        }
+
+        /**
+         * Load data for a specific date
+         */
+        async function loadDate(date) {
+            currentDate = date;
+            updateDateDisplay();
+
+            const dateStr = formatDateStr(date);
+
+            // Load routine blocks (appear every day)
+            routineBlocks = Routines.getRoutinesForDate(dateStr);
+
+            // Load local blocks (user-created)
+            localBlocks = await Storage.getBlocksByDate(dateStr);
+
+            // Load calendar events
+            calendarBlocks = await Calendar.getEventsForDate(dateStr);
+
+            // Combine all blocks (filtering routines that overlap calendar/are hidden)
+            blocks = [...getFilteredRoutines(), ...localBlocks, ...calendarBlocks];
+            renderBlocks();
+        }
+
+        /**
+         * Filter routines: remove those overlapping calendar events or hidden by user
+         */
+        function getFilteredRoutines() {
+            const dateStr = formatDateStr(currentDate);
+            const hiddenRoutineIds = getHiddenRoutines(dateStr);
+            return routineBlocks.filter(routine => {
+                if (hiddenRoutineIds.includes(routine.id)) return false;
+                const overlapsCalendar = calendarBlocks.some(cal => {
+                    return cal.startTime < routine.endTime && cal.endTime > routine.startTime;
+                });
+                return !overlapsCalendar;
+            });
+        }
+
+        /**
+         * Render all blocks
+         */
+        function renderBlocks() {
+            const container = elements.timegrid.querySelector('.blocks-container');
+            TimeBlocks.render(blocks);
+        }
+
+        /**
+         * Update the date display
+         */
+        function updateDateDisplay() {
+            // Simple compact date: "Po 12. 1."
+            const options = { weekday: 'short', day: 'numeric', month: 'numeric' };
+            // Year is optional in compact view
+            elements.currentDate.textContent = currentDate.toLocaleDateString('cs-CZ', options);
+            if (elements.currentYear) {
+                elements.currentYear.textContent = currentDate.getFullYear();
+            }
+        }
+
+        /**
+         * Toggle smart input visibility
+         */
+        function toggleSmartInput() {
+            const container = document.querySelector('.smart-input-container');
+            if (getComputedStyle(container).display === 'none') {
+                container.style.display = 'block';
+                elements.smartInput.focus();
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        /**
+         * Change date by delta days
+         */
+        function changeDate(delta) {
+            const newDate = new Date(currentDate);
+            newDate.setDate(newDate.getDate() + delta);
+            loadDate(newDate);
+        }
+
+        /**
+         * Go to today
+         */
+        function goToToday() {
+            loadDate(new Date());
+        }
+
+        /**
+         * Format date to YYYY-MM-DD
+         */
+        function formatDateStr(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        /**
+         * Handle smart input changes
+         */
+        function handleSmartInputChange() {
+            const input = elements.smartInput.value;
+            const preview = SmartInput.getPreview(input);
+
+            elements.inputFeedback.textContent = preview.text;
+            elements.inputFeedback.className = 'input-feedback' + (preview.isError ? ' error' : ' success');
+        }
+
+        /**
+         * Add block from smart input
+         */
+        async function addBlockFromInput() {
+            const input = elements.smartInput.value;
+            const parsed = SmartInput.parse(input);
+
+            if (!parsed) {
+                elements.inputFeedback.textContent = 'Nerozpoznán čas. Zkuste např. "Meeting v 14:00 na 1 hodinu"';
+                elements.inputFeedback.className = 'input-feedback error';
+                return;
             }
 
-            alert(errorMsg + '\nZkuste se odhlásit a znovu přihlásit.');
-        } finally {
-            // Keep spinning a bit longer for visual feedback
+            const block = {
+                id: Storage.generateId(),
+                date: formatDateStr(currentDate),
+                title: parsed.title,
+                startTime: parsed.startTime,
+                endTime: parsed.endTime,
+                category: parsed.category,
+                fromCalendar: false,
+                // Assign random color for tasks (work category)
+                customColor: parsed.category === 'work' ? TASK_PALETTE[Math.floor(Math.random() * TASK_PALETTE.length)] : null
+            };
+
+            await Storage.saveBlock(block);
+            localBlocks.push(block);
+            blocks = [...getFilteredRoutines(), ...localBlocks, ...calendarBlocks];
+            renderBlocks();
+
+            // Clear input
+            elements.smartInput.value = '';
+            elements.inputFeedback.textContent = `✓ Přidáno: ${block.title}`;
+            elements.inputFeedback.className = 'input-feedback success';
+
+            // Clear feedback after 2 seconds
             setTimeout(() => {
-                btn.classList.remove('rotating');
-            }, 500);
+                elements.inputFeedback.textContent = '';
+            }, 2000);
         }
-    }
 
-    /**
-     * Load data for a specific date
-     */
-    async function loadDate(date) {
-        currentDate = date;
-        updateDateDisplay();
+        /**
+         * Handle block moved event
+         */
+        async function handleBlockMoved(e) {
+            const { blockId, startTime, endTime } = e.detail;
 
-        const dateStr = formatDateStr(date);
+            // Find the block
+            const block = blocks.find(b => b.id === blockId);
+            if (!block || block.fromCalendar) return;
 
-        // Load routine blocks (appear every day)
-        routineBlocks = Routines.getRoutinesForDate(dateStr);
+            if (block.isRoutine) {
+                // Hide original routine, create local copy at new time
+                hideRoutine(formatDateStr(currentDate), block.id);
 
-        // Load local blocks (user-created)
-        localBlocks = await Storage.getBlocksByDate(dateStr);
+                const newBlock = {
+                    id: Storage.generateId(),
+                    date: formatDateStr(currentDate),
+                    title: block.title,
+                    startTime: startTime,
+                    endTime: endTime,
+                    category: block.category,
+                    notes: block.notes || '',
+                    fromCalendar: false
+                };
+                await Storage.saveBlock(newBlock);
+                localBlocks.push(newBlock);
+                await loadDate(currentDate);
+                triggerAutoSave();
+                return;
+            }
 
-        // Load calendar events
-        calendarBlocks = await Calendar.getEventsForDate(dateStr);
+            // Regular block - just update
+            block.startTime = startTime;
+            block.endTime = endTime;
 
-        // Combine all blocks (filtering routines that overlap calendar/are hidden)
-        blocks = [...getFilteredRoutines(), ...localBlocks, ...calendarBlocks];
-        renderBlocks();
-    }
+            await Storage.saveBlock(block);
+            await loadDate(currentDate);
+            triggerAutoSave();
+        }
 
-    /**
-     * Filter routines: remove those overlapping calendar events or hidden by user
-     */
-    function getFilteredRoutines() {
-        const dateStr = formatDateStr(currentDate);
-        const hiddenRoutineIds = getHiddenRoutines(dateStr);
-        return routineBlocks.filter(routine => {
-            if (hiddenRoutineIds.includes(routine.id)) return false;
-            const overlapsCalendar = calendarBlocks.some(cal => {
-                return cal.startTime < routine.endTime && cal.endTime > routine.startTime;
+        /**
+         * Handle block clicked event
+         */
+        function handleBlockClicked(e) {
+            const { blockId } = e.detail;
+            const block = blocks.find(b => b.id === blockId);
+
+            if (block) {
+                openModal(block);
+            }
+        }
+
+        /**
+         * Open the block edit modal
+         */
+        function openModal(block) {
+            editingBlockId = block.id;
+
+            elements.blockTitle.value = block.title;
+            elements.blockStart.value = block.startTime;
+            elements.blockEnd.value = block.endTime;
+            elements.blockNotes.value = block.notes || '';
+
+            // Set category
+            elements.categoryPicker.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.category === block.category);
             });
-            return !overlapsCalendar;
-        });
-    }
 
-    /**
-     * Render all blocks
-     */
-    function renderBlocks() {
-        const container = elements.timegrid.querySelector('.blocks-container');
-        TimeBlocks.render(blocks);
-    }
+            // Hide delete button for calendar events only
+            elements.deleteBlockBtn.style.display = block.fromCalendar ? 'none' : 'block';
 
-    /**
-     * Update the date display
-     */
-    function updateDateDisplay() {
-        // Simple compact date: "Po 12. 1."
-        const options = { weekday: 'short', day: 'numeric', month: 'numeric' };
-        // Year is optional in compact view
-        elements.currentDate.textContent = currentDate.toLocaleDateString('cs-CZ', options);
-        if (elements.currentYear) {
-            elements.currentYear.textContent = currentDate.getFullYear();
-        }
-    }
+            // Disable form for calendar events only
+            const isCalendarEvent = block.fromCalendar;
+            elements.blockTitle.disabled = isCalendarEvent;
+            elements.blockStart.disabled = isCalendarEvent;
+            elements.blockEnd.disabled = isCalendarEvent;
+            elements.categoryPicker.querySelectorAll('.category-btn').forEach(btn => {
+                btn.disabled = isCalendarEvent;
+            });
 
-    /**
-     * Toggle smart input visibility
-     */
-    function toggleSmartInput() {
-        const container = document.querySelector('.smart-input-container');
-        if (getComputedStyle(container).display === 'none') {
-            container.style.display = 'block';
-            elements.smartInput.focus();
-        } else {
-            container.style.display = 'none';
-        }
-    }
-
-    /**
-     * Change date by delta days
-     */
-    function changeDate(delta) {
-        const newDate = new Date(currentDate);
-        newDate.setDate(newDate.getDate() + delta);
-        loadDate(newDate);
-    }
-
-    /**
-     * Go to today
-     */
-    function goToToday() {
-        loadDate(new Date());
-    }
-
-    /**
-     * Format date to YYYY-MM-DD
-     */
-    function formatDateStr(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    /**
-     * Handle smart input changes
-     */
-    function handleSmartInputChange() {
-        const input = elements.smartInput.value;
-        const preview = SmartInput.getPreview(input);
-
-        elements.inputFeedback.textContent = preview.text;
-        elements.inputFeedback.className = 'input-feedback' + (preview.isError ? ' error' : ' success');
-    }
-
-    /**
-     * Add block from smart input
-     */
-    async function addBlockFromInput() {
-        const input = elements.smartInput.value;
-        const parsed = SmartInput.parse(input);
-
-        if (!parsed) {
-            elements.inputFeedback.textContent = 'Nerozpoznán čas. Zkuste např. "Meeting v 14:00 na 1 hodinu"';
-            elements.inputFeedback.className = 'input-feedback error';
-            return;
+            elements.blockModal.hidden = false;
         }
 
-        const block = {
-            id: Storage.generateId(),
-            date: formatDateStr(currentDate),
-            title: parsed.title,
-            startTime: parsed.startTime,
-            endTime: parsed.endTime,
-            category: parsed.category,
-            fromCalendar: false,
-            // Assign random color for tasks (work category)
-            customColor: parsed.category === 'work' ? TASK_PALETTE[Math.floor(Math.random() * TASK_PALETTE.length)] : null
-        };
-
-        await Storage.saveBlock(block);
-        localBlocks.push(block);
-        blocks = [...getFilteredRoutines(), ...localBlocks, ...calendarBlocks];
-        renderBlocks();
-
-        // Clear input
-        elements.smartInput.value = '';
-        elements.inputFeedback.textContent = `✓ Přidáno: ${block.title}`;
-        elements.inputFeedback.className = 'input-feedback success';
-
-        // Clear feedback after 2 seconds
-        setTimeout(() => {
-            elements.inputFeedback.textContent = '';
-        }, 2000);
-    }
-
-    /**
-     * Handle block moved event
-     */
-    async function handleBlockMoved(e) {
-        const { blockId, startTime, endTime } = e.detail;
-
-        // Find the block
-        const block = blocks.find(b => b.id === blockId);
-        if (!block || block.fromCalendar) return;
-
-        if (block.isRoutine) {
-            // Hide original routine, create local copy at new time
-            hideRoutine(formatDateStr(currentDate), block.id);
-
-            const newBlock = {
-                id: Storage.generateId(),
-                date: formatDateStr(currentDate),
-                title: block.title,
-                startTime: startTime,
-                endTime: endTime,
-                category: block.category,
-                notes: block.notes || '',
-                fromCalendar: false
-            };
-            await Storage.saveBlock(newBlock);
-            localBlocks.push(newBlock);
-            await loadDate(currentDate);
-            triggerAutoSave();
-            return;
+        /**
+         * Close the modal
+         */
+        function closeModal() {
+            elements.blockModal.hidden = true;
+            editingBlockId = null;
         }
 
-        // Regular block - just update
-        block.startTime = startTime;
-        block.endTime = endTime;
+        /**
+         * Handle block form submit
+         */
+        async function handleBlockFormSubmit(e) {
+            e.preventDefault();
 
-        await Storage.saveBlock(block);
-        await loadDate(currentDate);
-        triggerAutoSave();
-    }
+            const block = blocks.find(b => b.id === editingBlockId);
+            if (!block || block.fromCalendar) {
+                closeModal();
+                return;
+            }
 
-    /**
-     * Handle block clicked event
-     */
-    function handleBlockClicked(e) {
-        const { blockId } = e.detail;
-        const block = blocks.find(b => b.id === blockId);
+            if (block.isRoutine) {
+                // For routines: hide the original, create a new local block with changes
+                hideRoutine(formatDateStr(currentDate), block.id);
 
-        if (block) {
-            openModal(block);
-        }
-    }
+                const newBlock = {
+                    id: Storage.generateId(),
+                    date: formatDateStr(currentDate),
+                    title: elements.blockTitle.value,
+                    startTime: elements.blockStart.value,
+                    endTime: elements.blockEnd.value,
+                    notes: elements.blockNotes.value,
+                    category: block.category,
+                    fromCalendar: false
+                };
+                const selectedCategory = elements.categoryPicker.querySelector('.category-btn.selected');
+                if (selectedCategory) newBlock.category = selectedCategory.dataset.category;
 
-    /**
-     * Open the block edit modal
-     */
-    function openModal(block) {
-        editingBlockId = block.id;
+                await Storage.saveBlock(newBlock);
+                localBlocks.push(newBlock);
+                await loadDate(currentDate);
+                triggerAutoSave();
+                closeModal();
+                return;
+            }
 
-        elements.blockTitle.value = block.title;
-        elements.blockStart.value = block.startTime;
-        elements.blockEnd.value = block.endTime;
-        elements.blockNotes.value = block.notes || '';
+            // Update regular block
+            block.title = elements.blockTitle.value;
+            block.startTime = elements.blockStart.value;
+            block.endTime = elements.blockEnd.value;
+            block.notes = elements.blockNotes.value;
 
-        // Set category
-        elements.categoryPicker.querySelectorAll('.category-btn').forEach(btn => {
-            btn.classList.toggle('selected', btn.dataset.category === block.category);
-        });
-
-        // Hide delete button for calendar events only
-        elements.deleteBlockBtn.style.display = block.fromCalendar ? 'none' : 'block';
-
-        // Disable form for calendar events only
-        const isCalendarEvent = block.fromCalendar;
-        elements.blockTitle.disabled = isCalendarEvent;
-        elements.blockStart.disabled = isCalendarEvent;
-        elements.blockEnd.disabled = isCalendarEvent;
-        elements.categoryPicker.querySelectorAll('.category-btn').forEach(btn => {
-            btn.disabled = isCalendarEvent;
-        });
-
-        elements.blockModal.hidden = false;
-    }
-
-    /**
-     * Close the modal
-     */
-    function closeModal() {
-        elements.blockModal.hidden = true;
-        editingBlockId = null;
-    }
-
-    /**
-     * Handle block form submit
-     */
-    async function handleBlockFormSubmit(e) {
-        e.preventDefault();
-
-        const block = blocks.find(b => b.id === editingBlockId);
-        if (!block || block.fromCalendar) {
-            closeModal();
-            return;
-        }
-
-        if (block.isRoutine) {
-            // For routines: hide the original, create a new local block with changes
-            hideRoutine(formatDateStr(currentDate), block.id);
-
-            const newBlock = {
-                id: Storage.generateId(),
-                date: formatDateStr(currentDate),
-                title: elements.blockTitle.value,
-                startTime: elements.blockStart.value,
-                endTime: elements.blockEnd.value,
-                notes: elements.blockNotes.value,
-                category: block.category,
-                fromCalendar: false
-            };
             const selectedCategory = elements.categoryPicker.querySelector('.category-btn.selected');
-            if (selectedCategory) newBlock.category = selectedCategory.dataset.category;
+            if (selectedCategory) {
+                block.category = selectedCategory.dataset.category;
+            }
 
-            await Storage.saveBlock(newBlock);
-            localBlocks.push(newBlock);
+            await Storage.saveBlock(block);
+            renderBlocks();
+            triggerAutoSave();
+            closeModal();
+        }
+
+        /**
+         * Handle delete block
+         */
+        async function handleDeleteBlock() {
+            const block = blocks.find(b => b.id === editingBlockId);
+            if (!block || block.fromCalendar) {
+                closeModal();
+                return;
+            }
+
+            if (block.isRoutine) {
+                // Hide routine for this day
+                hideRoutine(formatDateStr(currentDate), block.id);
+                await loadDate(currentDate);
+                closeModal();
+                return;
+            }
+
+            await Storage.deleteBlock(block.id);
+            localBlocks = localBlocks.filter(b => b.id !== block.id);
             await loadDate(currentDate);
             triggerAutoSave();
             closeModal();
-            return;
         }
 
-        // Update regular block
-        block.title = elements.blockTitle.value;
-        block.startTime = elements.blockStart.value;
-        block.endTime = elements.blockEnd.value;
-        block.notes = elements.blockNotes.value;
-
-        const selectedCategory = elements.categoryPicker.querySelector('.category-btn.selected');
-        if (selectedCategory) {
-            block.category = selectedCategory.dataset.category;
+        /**
+         * Get hidden routine IDs for a date
+         */
+        function getHiddenRoutines(dateStr) {
+            try {
+                return JSON.parse(localStorage.getItem('hiddenRoutines_' + dateStr) || '[]');
+            } catch {
+                return [];
+            }
         }
 
-        await Storage.saveBlock(block);
-        renderBlocks();
-        triggerAutoSave();
-        closeModal();
-    }
-
-    /**
-     * Handle delete block
-     */
-    async function handleDeleteBlock() {
-        const block = blocks.find(b => b.id === editingBlockId);
-        if (!block || block.fromCalendar) {
-            closeModal();
-            return;
+        /**
+         * Hide a routine for a specific date
+         */
+        function hideRoutine(dateStr, routineId) {
+            const hidden = getHiddenRoutines(dateStr);
+            if (!hidden.includes(routineId)) {
+                hidden.push(routineId);
+                localStorage.setItem('hiddenRoutines_' + dateStr, JSON.stringify(hidden));
+            }
         }
 
-        if (block.isRoutine) {
-            // Hide routine for this day
-            hideRoutine(formatDateStr(currentDate), block.id);
-            await loadDate(currentDate);
-            closeModal();
-            return;
+        /**
+         * Update current time indicator - VERTICAL line based on current time
+         */
+        function updateCurrentTimeIndicator() {
+            // Remove existing indicator
+            const existing = document.querySelector('.current-time-indicator');
+            if (existing) existing.remove();
+
+            // Only show for today
+            const today = new Date();
+            if (formatDateStr(today) !== formatDateStr(currentDate)) return;
+
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+
+            // Only show during grid hours
+            if (hours < TimeBlocks.GRID_START_HOUR || hours > TimeBlocks.GRID_END_HOUR) return;
+
+            // Find the current hour row
+            const currentRow = elements.timegrid.querySelector(`[data-hour="${hours}"]`);
+            if (!currentRow) return;
+
+            const slotCells = currentRow.querySelectorAll('.time-slot');
+            if (slotCells.length === 0) return;
+
+            const cellWidth = slotCells[0].offsetWidth;
+
+            // Calculate position within the row
+            const slotIndex = Math.floor(minutes / 15); // 0-3
+            const minutesInSlot = minutes % 15;
+            const percentInSlot = minutesInSlot / 15;
+
+            // Left position relative to the time label = (slot index + percent in slot) * cell width
+            const leftPosition = (slotIndex + percentInSlot) * cellWidth;
+
+            const indicator = document.createElement('div');
+            indicator.className = 'current-time-indicator';
+            indicator.style.left = `${leftPosition}px`;
+
+            // Append to the row's slot area (after the time label)
+            currentRow.style.position = 'relative';
+            currentRow.appendChild(indicator);
         }
 
-        await Storage.deleteBlock(block.id);
-        localBlocks = localBlocks.filter(b => b.id !== block.id);
-        await loadDate(currentDate);
-        triggerAutoSave();
-        closeModal();
-    }
-
-    /**
-     * Get hidden routine IDs for a date
-     */
-    function getHiddenRoutines(dateStr) {
-        try {
-            return JSON.parse(localStorage.getItem('hiddenRoutines_' + dateStr) || '[]');
-        } catch {
-            return [];
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
         }
-    }
-
-    /**
-     * Hide a routine for a specific date
-     */
-    function hideRoutine(dateStr, routineId) {
-        const hidden = getHiddenRoutines(dateStr);
-        if (!hidden.includes(routineId)) {
-            hidden.push(routineId);
-            localStorage.setItem('hiddenRoutines_' + dateStr, JSON.stringify(hidden));
-        }
-    }
-
-    /**
-     * Update current time indicator - VERTICAL line based on current time
-     */
-    function updateCurrentTimeIndicator() {
-        // Remove existing indicator
-        const existing = document.querySelector('.current-time-indicator');
-        if (existing) existing.remove();
-
-        // Only show for today
-        const today = new Date();
-        if (formatDateStr(today) !== formatDateStr(currentDate)) return;
-
-        const now = new Date();
-        const hours = now.getHours();
-        const minutes = now.getMinutes();
-
-        // Only show during grid hours
-        if (hours < TimeBlocks.GRID_START_HOUR || hours > TimeBlocks.GRID_END_HOUR) return;
-
-        // Find the current hour row
-        const currentRow = elements.timegrid.querySelector(`[data-hour="${hours}"]`);
-        if (!currentRow) return;
-
-        const slotCells = currentRow.querySelectorAll('.time-slot');
-        if (slotCells.length === 0) return;
-
-        const cellWidth = slotCells[0].offsetWidth;
-
-        // Calculate position within the row
-        const slotIndex = Math.floor(minutes / 15); // 0-3
-        const minutesInSlot = minutes % 15;
-        const percentInSlot = minutesInSlot / 15;
-
-        // Left position relative to the time label = (slot index + percent in slot) * cell width
-        const leftPosition = (slotIndex + percentInSlot) * cellWidth;
-
-        const indicator = document.createElement('div');
-        indicator.className = 'current-time-indicator';
-        indicator.style.left = `${leftPosition}px`;
-
-        // Append to the row's slot area (after the time label)
-        currentRow.style.position = 'relative';
-        currentRow.appendChild(indicator);
-    }
-
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
-})();
+    }) ();
