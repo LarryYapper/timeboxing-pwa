@@ -345,6 +345,12 @@ body {
     box-shadow: var(--shadow-md);
 }
 
+.btn-google.btn-sm {
+    min-width: 28px;
+    min-height: 28px;
+    padding: 2px;
+}
+
 .google-icon {
     flex-shrink: 0;
 }
