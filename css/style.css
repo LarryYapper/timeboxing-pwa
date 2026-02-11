@@ -646,9 +646,9 @@ body {
 .time-block-content.is-routine.light-bg,
 .time-block-fill.is-routine.light-bg {
     background-image: repeating-linear-gradient(45deg,
-            rgba(0, 0, 0, 0.1),
-            /* Black Stripes for Light BG */
-            rgba(0, 0, 0, 0.1) 10px,
+            rgba(0, 0, 0, 0.3),
+            /* Black Stripes for Light BG (Increased contrast) */
+            rgba(0, 0, 0, 0.3) 10px,
             transparent 10px,
             transparent 20px);
 }

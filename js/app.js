@@ -258,8 +258,10 @@
         try {
             const remoteData = await Calendar.loadData();
             if (remoteData) {
-                await Storage.importBackup(remoteData, true);
-                console.log('Synced from Drive');
+                // SYNC FIX: Merge data (overwrite=false) instead of replacing (overwrite=true)
+                // This prevents losing local changes that haven't been pushed yet
+                await Storage.importBackup(remoteData, false);
+                console.log('Synced from Drive (Merged)');
                 await loadDate(currentDate); // Reload UI
                 showSyncStatus('Synced', 'success');
             } else {
