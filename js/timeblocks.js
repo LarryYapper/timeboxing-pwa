@@ -547,6 +547,7 @@ const TimeBlocks = (function () {
     return {
         init,
         render,
+        renderAllDay,
         timeToPosition,
         timeToSlotIndex,
         slotIndexToTime,
@@ -556,4 +557,36 @@ const TimeBlocks = (function () {
         HOUR_HEIGHT: 60,
         SLOT_HEIGHT: 15
     };
+
+    /**
+     * Render all-day events into their dedicated container
+     */
+    function renderAllDay(events) {
+        const container = document.getElementById('allday-events');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        if (!events || events.length === 0) {
+            container.hidden = true;
+            return;
+        }
+
+        container.hidden = false;
+
+        events.forEach(event => {
+            const chip = document.createElement('div');
+            chip.className = 'allday-chip';
+            chip.textContent = event.title;
+
+            // Style
+            const bgColor = event.backgroundColor || '#588AEE'; // Default calendar blue
+            chip.style.backgroundColor = bgColor;
+            // Most calendar colors are dark-ish, so white text is usually safe. 
+            // We could use getTextColorForCategory but these aren't categories.
+            chip.style.color = '#fff';
+
+            container.appendChild(chip);
+        });
+    }
 })();
