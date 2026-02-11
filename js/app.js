@@ -1,6 +1,8 @@
 /**
  * app.js - Main application logic
+ * Version: 0.62
  */
+console.log('Timeboxing App v0.62 loaded');
 
 (function () {
     // State
