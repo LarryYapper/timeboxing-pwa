@@ -1,8 +1,8 @@
 /**
  * app.js - Main application logic
- * Version: 0.66
+ * Version: 0.67
  */
-console.log('Timeboxing App v0.66 loaded');
+console.log('Timeboxing App v0.67 loaded');
 // alert('App Updated to v64'); // Uncomment if needed, but the button should be enough
 
 (function () {
@@ -504,48 +504,75 @@ console.log('Timeboxing App v0.66 loaded');
 
     // DEBUG BUTTON LISTENER
     // DEBUG BUTTON LISTENER
+    // DEBUG BUTTON LISTENER
     const debugBtn = document.getElementById('debug-btn-fixed') || document.getElementById('debug-btn');
     if (debugBtn) {
         debugBtn.addEventListener('click', async () => {
             if (!Calendar.getSignedInStatus()) {
-                alert('Not signed in');
+                alert('Not signed in (Calendar.getSignedInStatus() is false)');
                 return;
             }
 
             try {
-                const todayStr = formatDateStr(new Date());
-                alert(`DEBUG: finding calendars...`);
-
-                // Direct access to GAPI to debug calendars
-                const calList = await gapi.client.calendar.calendarList.list({ minAccessRole: 'reader' });
-                const calendars = calList.result.items || [];
-
-                let msg = `Found ${calendars.length} calendars:\n`;
-                calendars.forEach(c => msg += `- ${c.summary} (${c.accessRole})\n`);
-                alert(msg);
-
-                // Now fetch events for tomorrow
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                const tmrwStr = formatDateStr(tomorrow);
-
-                alert(`Fetching events for TOMORROW (${tmrwStr})...`);
-                const events = await Calendar.getEventsForDate(tmrwStr);
-
-                let details = `Total: ${events.length}\n`;
-                // Group by calendar
-                const counts = {};
-                events.forEach(e => {
-                    counts[e.calendarName] = (counts[e.calendarName] || 0) + 1;
-                });
-                for (const [name, count] of Object.entries(counts)) {
-                    details += `${name}: ${count}\n`;
+                // 1. Check GAPI
+                if (!gapi || !gapi.client || !gapi.client.calendar) {
+                    throw new Error('GAPI Calendar client not loaded');
                 }
 
-                alert(details);
+                alert(`DEBUG V67: Starting Fetch...`);
+
+                // 2. Try to List Calendars
+                let calendars = [];
+                try {
+                    const calList = await gapi.client.calendar.calendarList.list({ minAccessRole: 'reader' });
+                    calendars = calList.result.items || [];
+                    let msg = `Found ${calendars.length} calendars:\n`;
+                    calendars.forEach(c => msg += `- ${c.summary}\n`);
+                    alert(msg);
+                } catch (calListErr) {
+                    const errStr = typeof calListErr === 'object' ? JSON.stringify(calListErr) : String(calListErr);
+                    alert(`List Calendars Failed: ${errStr}\n\nTrying 'primary' fallback...`);
+                    calendars = [{ id: 'primary', summary: 'Primary' }];
+                }
+
+                // 3. Fetch Events for Tomorrow
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                // Force full day range
+                const timeMin = new Date(tomorrow); timeMin.setHours(0, 0, 0, 0);
+                const timeMax = new Date(tomorrow); timeMax.setHours(23, 59, 59, 999);
+
+                alert(`Fetching events for ${timeMin.toISOString()}...`);
+
+                let allEvents = [];
+                for (const cal of calendars) {
+                    try {
+                        const res = await gapi.client.calendar.events.list({
+                            calendarId: cal.id,
+                            timeMin: timeMin.toISOString(),
+                            timeMax: timeMax.toISOString(),
+                            singleEvents: true,
+                            orderBy: 'startTime'
+                        });
+                        const items = res.result.items || [];
+                        if (items.length > 0) {
+                            alert(`Found ${items.length} in ${cal.summary}`);
+                            allEvents.push(...items);
+                        }
+                    } catch (evErr) {
+                        console.error(evErr);
+                    }
+                }
+
+                if (allEvents.length === 0) {
+                    alert('Zero events found across all calendars.');
+                } else {
+                    alert(`Total Events Tomorrow: ${allEvents.length}\nFirst: ${allEvents[0].summary}`);
+                }
 
             } catch (e) {
-                alert(`Debug Error: ${e.message}`);
+                const msg = e.message || JSON.stringify(e);
+                alert(`CRITICAL ERROR:\n${msg}`);
                 console.error(e);
             }
         });
