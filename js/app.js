@@ -250,18 +250,9 @@
     /**
      * Sync data from Drive
      */
-    if (response.status === 200) {
-        // ...
-        return data;
-    }
-    return null;
-} catch (err) {
-    // ...
-    return null;
-}
-    }
+    // Sync data from Drive
+    // (removed invalid code block)
 
-// ... inside app.js ...
 
 async function syncFromDrive() {
     if (isSyncing) return null;
