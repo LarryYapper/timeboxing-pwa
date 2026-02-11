@@ -1089,34 +1089,34 @@ body {
    UI POLISH (v74)
    ==================================== */
 
-/* CURRENT TIME INDICATOR - SUPER PROMINENT */
+/* CURRENT TIME INDICATOR - ADAPTIVE HIGH CONTRAST (v76) */
 .current-time-indicator {
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 3px;
-    /* Thicker */
-    background-color: #ff0000;
+    width: 2px;
+    background-color: var(--color-text);
+    /* Adaptive: Black in Light, White in Dark */
     z-index: 100;
-    /* Higher z-index */
     pointer-events: none;
-    box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
-    /* Stronger glow */
+    /* No blur/glow for E-ink sharpness */
 }
 
 .current-time-indicator::before {
     content: '';
     position: absolute;
     top: -5px;
-    /* Adjust for larger size */
-    left: -5px;
-    /* Center 3px line: - (13-3)/2 = -5 */
-    width: 13px;
-    /* Larger dot */
-    height: 13px;
-    background-color: #ff0000;
-    border-radius: 50%;
-    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+    left: -4px;
+    /* Triangle Arrow Shape */
+    width: 0;
+    height: 0;
+    background-color: transparent;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid var(--color-text);
+    /* Points down */
+    border-radius: 0;
+    box-shadow: none;
 }
 
 /* Fix Today Button Height to match Google Button */
