@@ -7,8 +7,8 @@ const Calendar = (function () {
     const CLIENT_ID = '152474497789-at2nvf7odl1f8p7bfd1k1p5si58s4ius.apps.googleusercontent.com';
     const API_KEY = ''; // Optional: API key for quota management
 
-    // Scopes: Calendar (read/write for future), Drive AppData (read/write)
-    const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.appdata';
+    // Scopes: Calendar (read/write for events), CalendarList (read), Drive AppData (read/write)
+    const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.calendarlist.readonly https://www.googleapis.com/auth/drive.appdata';
     const DISCOVERY_DOCS = [
         'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest',
         'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
