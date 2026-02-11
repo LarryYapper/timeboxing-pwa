@@ -1,8 +1,8 @@
 /**
  * app.js - Main application logic
- * Version: 0.70
+ * Version: 0.71
  */
-console.log('Timeboxing App v0.70 loaded');
+console.log('Timeboxing App v0.71 loaded');
 // alert('App Updated to v64'); // Uncomment if needed, but the button should be enough
 
 (function () {
@@ -144,6 +144,9 @@ console.log('Timeboxing App v0.70 loaded');
         for (let hour = TimeBlocks.GRID_START_HOUR; hour <= TimeBlocks.GRID_END_HOUR; hour++) {
             const row = document.createElement('div');
             row.className = 'timegrid-row';
+            if (hour === 23) {
+                row.classList.add('short-row');
+            }
             row.dataset.hour = hour;
 
             // Time label cell
