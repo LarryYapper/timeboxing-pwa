@@ -294,8 +294,43 @@
         btn.classList.add('rotating');
 
         try {
+
             // STEP 1: Pull AppData (tasks) - Merge remote changes
             const remoteData = await syncFromDrive();
+
+            // STEP 1.5: Fetch Calendar Events for next 5 days (Offline Support)
+            const daysToSync = 5;
+            const today = new Date();
+            let eventsSyncedCount = 0;
+
+            for (let i = 0; i < daysToSync; i++) {
+                const syncDate = new Date(today);
+                syncDate.setDate(today.getDate() + i);
+                const dateStr = formatDateStr(syncDate);
+
+                // Fetch events
+                const events = await Calendar.getEventsForDate(dateStr);
+
+                // Save them to local storage as cached blocks
+                // First, remove existing cached calendar blocks for this day to avoid stale data
+                // We can't easily do that without clearing all... 
+                // Instead, we just save these over.
+                // Actually, duplicate gcal_ ids will just overwrite. 
+                // But what about DELETED events? 
+                // We should clear old gcal_ blocks for this date.
+
+                const existingBlocks = await Storage.getBlocksByDate(dateStr);
+                const staleCalendarBlocks = existingBlocks.filter(b => b.fromCalendar);
+                for (const b of staleCalendarBlocks) {
+                    await Storage.deleteBlock(b.id);
+                }
+
+                // Save new ones
+                for (const event of events) {
+                    await Storage.saveBlock(event);
+                }
+                eventsSyncedCount += events.length;
+            }
 
             // STEP 2: Force Push Local Data - Ensure our changes are uploaded
             await triggerAutoSave(true);
@@ -532,11 +567,40 @@
         // Load routine blocks (appear every day)
         routineBlocks = Routines.getRoutinesForDate(dateStr);
 
-        // Load local blocks (user-created)
-        localBlocks = await Storage.getBlocksByDate(dateStr);
+        // Load local blocks (user-created + cached calendar)
+        const allLocalBlocks = await Storage.getBlocksByDate(dateStr);
 
-        // Load calendar events
+        // Load live calendar events
         calendarBlocks = await Calendar.getEventsForDate(dateStr);
+
+        // Deduplication Logic:
+        // If we successfully fetched live events (calendarBlocks is not empty), use them.
+        // If live fetch failed or returned nothing (but we might be offline), we want to show cached.
+        // Problem: If user has 0 events today, calendarBlocks is empty -> we might show stale cache.
+        // Solution: If we are SIGNED IN and ONLINE, we trust live data (even if empty).
+        // But getEventsForDate returns [] on error too.
+        // Let's rely on IDs.
+
+        const liveIds = new Set(calendarBlocks.map(b => b.id));
+
+        // Filter local blocks:
+        // 1. Keep all user blocks (!fromCalendar)
+        // 2. Keep cached calendar blocks ONLY if they are NOT in live list AND we suspect we are offline.
+        // Actually, simplest robust approach:
+        // - Always show User Blocks
+        // - Always show Live Calendar Blocks
+        // - Show Cached Calendar Blocks ONLY if they are not in Live list.
+
+        localBlocks = allLocalBlocks.filter(b => {
+            if (!b.fromCalendar) return true; // Keep user blocks
+
+            // It's a cached calendar block.
+            // If we display it, we might duplicate it if live list has it too (but IDs match).
+            // If IDs match, `blocks` array merge later might handle it?
+            // `blocks` is just an array. If we have two objects with same ID, TimeBlocks.render might get confused or render both.
+            // TimeBlocks.render doesn't deduplicate by ID.
+            return !liveIds.has(b.id);
+        });
 
         // Combine all blocks (filtering routines that overlap calendar/are hidden)
         blocks = [...getFilteredRoutines(), ...localBlocks, ...calendarBlocks];

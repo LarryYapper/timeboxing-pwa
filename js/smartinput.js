@@ -164,8 +164,8 @@ const SmartInput = (function () {
                     minutes: endMinutes % 60
                 };
             } else {
-                // Default to 30 minutes
-                const endMinutes = startTime.hours * 60 + startTime.minutes + 30;
+                // Default to 15 minutes
+                const endMinutes = startTime.hours * 60 + startTime.minutes + 15;
                 endTime = {
                     hours: Math.floor(endMinutes / 60) % 24,
                     minutes: endMinutes % 60
@@ -260,7 +260,7 @@ const SmartInput = (function () {
 
             if (endMinutes <= startMinutes) {
                 // Add duration to make it valid
-                const newEndMinutes = startMinutes + 30;
+                const newEndMinutes = startMinutes + 15;
                 snappedEnd.hours = Math.floor(newEndMinutes / 60) % 24;
                 snappedEnd.minutes = newEndMinutes % 60;
             }
