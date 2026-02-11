@@ -200,8 +200,7 @@ const Calendar = (function () {
         if (!isSignedIn) return;
         try {
             const dataStr = JSON.stringify(data);
-            console.log(`Debug: Saving ${dataStr.length} bytes to Drive`);
-            // alert(`Debug: Uploading ${dataStr.length} bytes...`); // Optional: annoying but useful
+            console.log(`Debug: Saving ${dataStr.length} bytes to Drive. Blocks: ${data.blocks.length}`);
 
             const fileId = await findDataFile();
 
@@ -279,9 +278,7 @@ const Calendar = (function () {
                 // Actually gapi handles it.
 
                 const size = JSON.stringify(data).length;
-                console.log(`Debug: Loaded ${size} bytes from Drive`);
-                // alert(`Debug: Downloaded ${size} bytes.`);
-
+                console.log(`Debug: Loaded ${size} bytes from Drive. Blocks: ${data.blocks ? data.blocks.length : 0}`);
                 return data;
             }
             return null;

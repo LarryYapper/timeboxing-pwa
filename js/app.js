@@ -426,14 +426,16 @@
             // STEP 3: Load events/local data for UI
             await loadDate(currentDate);
 
+            // Get total local blocks for debug
+            const exportData = await Storage.exportBackup();
+            const localCount = exportData.blocks.length;
+
             // Check if we found any events
             const eventCount = calendarBlocks.length;
-            if (eventCount > 0) {
-                // Modified alert to confirm task sync too
-                alert(`Data synchronizována a uložena!\n\nÚkoly: OK\nKalendář: ${eventCount} událostí`);
-            } else {
-                alert('Data synchronizována a uložena!\n\nÚkoly: OK');
-            }
+
+            alert(`Synchronizace OK!\n\n` +
+                `Místní úkoly: ${localCount}\n` +
+                `Kalendář: ${eventCount} událostí`);
         } catch (error) {
             console.error('Sync failed:', error);
             alert('Synchronizace selhala. Zkuste se odhlásit a znovu přihlásit.');
