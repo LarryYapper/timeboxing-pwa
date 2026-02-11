@@ -240,7 +240,14 @@ const TimeBlocks = (function () {
                 }
 
                 fill.style.backgroundColor = bgColor;
-                fill.style.color = block.fromCalendar ? '#fff' : getTextColorForCategory(block.category, bgColor);
+                const textColor = block.fromCalendar ? '#fff' : getTextColorForCategory(block.category, bgColor);
+                fill.style.color = textColor;
+
+                // For routines, add .light-bg if text is dark (implies light background)
+                if (block.isRoutine && textColor === '#1a1a1a') {
+                    fill.classList.add('light-bg');
+                }
+
                 if (block.fromCalendar) {
                     fill.style.fontFamily = "'Space Grotesk', sans-serif";
                     fill.style.fontWeight = '700';

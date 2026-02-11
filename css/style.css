@@ -635,8 +635,20 @@ body {
 .time-block-content.is-routine,
 .time-block-fill.is-routine {
     background-image: repeating-linear-gradient(45deg,
-            rgba(255, 255, 255, 0.2),
-            rgba(255, 255, 255, 0.2) 10px,
+            rgba(255, 255, 255, 0.4),
+            /* Stronger White for Dark BG */
+            rgba(255, 255, 255, 0.4) 10px,
+            transparent 10px,
+            transparent 20px);
+}
+
+/* Light Background Routine (Yellow, Cream -> Dark Stripes) */
+.time-block-content.is-routine.light-bg,
+.time-block-fill.is-routine.light-bg {
+    background-image: repeating-linear-gradient(45deg,
+            rgba(0, 0, 0, 0.1),
+            /* Black Stripes for Light BG */
+            rgba(0, 0, 0, 0.1) 10px,
             transparent 10px,
             transparent 20px);
 }
