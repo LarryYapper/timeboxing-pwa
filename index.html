@@ -24,6 +24,10 @@
 </head>
 
 <body>
+    <button id="debug-btn-fixed"
+        style="position: fixed; top: 10px; left: 10px; z-index: 9999; padding: 10px; background: red; color: white;">
+        DEBUG SYNC
+    </button>
     <div class="app-container">
         <!-- Header -->
         <header class="header">
@@ -197,13 +201,13 @@
     <script src="js/smartinput.js?v=40"></script>
     <script src="js/timeblocks.js?v=45"></script>
     <script src="js/calendar.js?v=29"></script>
-    <script src="js/app.js?v=63"></script>
+    <script src="js/app.js?v=64"></script>
 
     <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=63')
+                navigator.serviceWorker.register('sw.js?v=64')
                     .then(reg => console.log('SW registered'))
                     .catch(err => console.log('SW registration failed:', err));
             });

@@ -1,8 +1,9 @@
 /**
  * app.js - Main application logic
- * Version: 0.63
+ * Version: 0.64
  */
-console.log('Timeboxing App v0.63 loaded');
+console.log('Timeboxing App v0.64 loaded');
+// alert('App Updated to v64'); // Uncomment if needed, but the button should be enough
 
 (function () {
     // State
@@ -502,7 +503,7 @@ console.log('Timeboxing App v0.63 loaded');
     }
 
     // DEBUG BUTTON LISTENER
-    const debugBtn = document.getElementById('debug-btn');
+    const debugBtn = document.getElementById('debug-btn-fixed') || document.getElementById('debug-btn');
     if (debugBtn) {
         debugBtn.addEventListener('click', async () => {
             if (!Calendar.getSignedInStatus()) {
