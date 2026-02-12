@@ -137,6 +137,10 @@ body.light-mode {
 }
 
 /* Base Body Styles (Dark Mode Default) */
+html {
+    overscroll-behavior-y: none;
+}
+
 body {
     overscroll-behavior-y: none;
 }
