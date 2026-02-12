@@ -20,6 +20,8 @@ const SmartInput = (function () {
         atTime: /(?:v|ve)\s*(\d{1,2})(?::(\d{2}))?/i,
         // "14:00", "14.00"
         simpleTime: /\b(\d{1,2})[:.](\d{2})\b/,
+        // "1445", "830" (Colon-less time)
+        noColon: /\b((?:[01]?\d|2[0-3]))([0-5]\d)\b/,
         // "od 7 do 8", "od 7:00 do 8:30"
         fromTo: /od\s*(\d{1,2})(?::(\d{2}))?\s*do\s*(\d{1,2})(?::(\d{2}))?/i,
         // "20:45 until 22:00", "7 until 8:30"
@@ -35,7 +37,9 @@ const SmartInput = (function () {
         // "1 hodinu", "30 minut", "1.5h"
         simpleTime: /(\d+(?:[.,]\d+)?)\s*(hodin[uya]?|h|minut[uya]?|min|m)\b/i,
         // "45m", "1h"
-        shorthand: /(\d+(?:[.,]\d+)?)(h|m)\b/i
+        shorthand: /(\d+(?:[.,]\d+)?)(h|m)\b/i,
+        // "Task 15" (Implicit minutes at end of string)
+        implicit: /\s+(\d+)\s*$/
     };
 
     /**
