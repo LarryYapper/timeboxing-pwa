@@ -1,12 +1,12 @@
 /**
  * app.js - Main application logic
- * Version: 1.40
+ * Version: 1.41
  */
-console.log('Timeboxing App v1.40 loaded');
+console.log('Timeboxing App v1.41 loaded');
 
 (function () {
     // State
-    const APP_VERSION = 'v1.40';
+    const APP_VERSION = 'v1.41';
     let currentDate = new Date();
     let blocks = []; // Combined routines + local + calendar blocks
     let routineBlocks = [];
@@ -1043,10 +1043,17 @@ console.log('Timeboxing App v1.40 loaded');
      */
     function handleSmartInputChange() {
         const input = elements.smartInput.value;
+
+        if (!input.trim()) {
+            elements.inputFeedback.textContent = '';
+            elements.inputFeedback.className = 'input-feedback'; // remove active
+            return;
+        }
+
         const preview = SmartInput.getPreview(input);
 
         elements.inputFeedback.textContent = preview.text;
-        elements.inputFeedback.className = 'input-feedback' + (preview.isError ? ' error' : ' success');
+        elements.inputFeedback.className = 'input-feedback active' + (preview.isError ? ' error' : ' success');
     }
 
     /**
@@ -1058,7 +1065,7 @@ console.log('Timeboxing App v1.40 loaded');
 
         if (!parsed) {
             elements.inputFeedback.textContent = 'Nerozpoznán čas. Zkuste např. "Meeting v 14:00 na 1 hodinu"';
-            elements.inputFeedback.className = 'input-feedback error';
+            elements.inputFeedback.className = 'input-feedback active error';
             return;
         }
 
@@ -1082,7 +1089,7 @@ console.log('Timeboxing App v1.40 loaded');
         // Clear input
         elements.smartInput.value = '';
         elements.inputFeedback.textContent = `✓ Přidáno: ${block.title}`;
-        elements.inputFeedback.className = 'input-feedback success';
+        elements.inputFeedback.className = 'input-feedback active success';
 
         // Clear feedback after 2 seconds
         setTimeout(() => {

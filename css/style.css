@@ -438,10 +438,25 @@ body {
 }
 
 .input-feedback {
-    margin-top: var(--spacing-xs);
+    margin-top: 0;
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
+    min-height: 0;
+    /* Collapse when empty */
+    height: 0;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    padding: 0;
+    opacity: 0;
+}
+
+.input-feedback.active {
+    margin-top: var(--spacing-xs);
+    height: auto;
     min-height: 1.5em;
+    /* Restore height when active */
+    padding: var(--spacing-xs) 0;
+    opacity: 1;
 }
 
 .input-feedback.success {
