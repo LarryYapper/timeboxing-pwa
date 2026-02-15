@@ -1155,6 +1155,15 @@ console.log('Timeboxing App v1.08 loaded');
         const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
         indicator.setAttribute('data-time', timeString);
 
+        // Check for underlying block to switch contrast
+        // Blocks are typically .time-block-fill inside the slot
+        const currentSlot = slotCells[slotIndex];
+        const hasBlock = currentSlot.querySelector('.time-block-fill') || currentSlot.classList.contains('has-block');
+
+        if (hasBlock) {
+            indicator.classList.add('contrast-mode');
+        }
+
         // Append to the row's slot area (after the time label)
         currentRow.style.position = 'relative';
         currentRow.appendChild(indicator);
