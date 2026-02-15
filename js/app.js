@@ -1,10 +1,10 @@
 /**
  * app.js - Main application logic
- * Version: 1.61
+ * Version: 1.62
  */
-console.log('Timeboxing App v1.61 loaded');
+console.log('Timeboxing App v1.62 loaded');
 
-// GLOBAL ERROR HANDLER - Must run first!
+// GLOBAL ERROR HANDLER
 window.onerror = function (msg, url, line, col, error) {
     let debug = document.getElementById('err-debug');
     if (!debug) {
@@ -27,40 +27,80 @@ window.onerror = function (msg, url, line, col, error) {
 
 (function () {
     // State
-    const APP_VERSION = 'v1.61';
+    const APP_VERSION = 'v1.62';
 
-    // IMMEDIATE LAYOUT FORCE - Run before anything else
-    // This ensures blue background/layout even if init() crashes
+    // DEBUG STATS OVERLAY
+    function updateDebugStats(headerH, availH, rowH, screenH) {
+        let stats = document.getElementById('layout-stats');
+        if (!stats) {
+            stats = document.createElement('div');
+            stats.id = 'layout-stats';
+            stats.style.position = 'fixed';
+            stats.style.top = '0';
+            stats.style.right = '0';
+            stats.style.background = 'rgba(0,0,0,0.85)';
+            stats.style.color = '#00ff00';
+            stats.style.fontSize = '12px';
+            stats.style.padding = '4px 8px';
+            stats.style.zIndex = '99999';
+            stats.style.fontFamily = 'monospace';
+            stats.style.pointerEvents = 'none';
+            document.body.appendChild(stats);
+        }
+        stats.innerHTML = `Screen: ${screenH}px<br>Header: ${headerH}px<br>Avail: ${availH}px<br>Row: ${rowH.toFixed(2)}px`;
+    }
+
+    // IMMEDIATE LAYOUT FORCE
     function forceImmediateLayout() {
         try {
+            const screenH = window.innerHeight;
+
+            // 1. Basic Reset
             document.documentElement.style.height = '100%';
             document.body.style.height = '100%';
             document.body.style.overflow = 'hidden';
-            document.body.style.background = '#001a33'; // Deep Blue - Visual Confirm
+            document.body.style.background = '#001a33'; // Keep Blue for now
 
             const app = document.querySelector('.app-container');
             if (app) {
-                app.style.height = window.innerHeight + 'px';
+                app.style.height = screenH + 'px';
                 app.style.display = 'flex';
                 app.style.flexDirection = 'column';
                 app.style.padding = '12px 12px 0 12px';
                 app.style.boxSizing = 'border-box';
-                // app.style.border = '2px solid cyan'; // Debug Border
             }
 
-            // Force Grid
+            // 2. Measure Header
+            const header = document.querySelector('header');
+            const gridHeader = document.querySelector('.timegrid-header');
+            let headerUsed = 0;
+
+            if (header) headerUsed += header.offsetHeight;
+            if (gridHeader) headerUsed += gridHeader.offsetHeight;
+
+            // If header is 0, we might be too early, use estimate
+            const finalHeaderUsed = headerUsed > 0 ? headerUsed : 100;
+
+            // 3. Calculate Row
+            // -12px top padding, -2px borders/safety
+            const availH = screenH - finalHeaderUsed - 12 - 2;
+            const rowH = Math.max(10, availH / 17); // Min 10px prevents crash
+
+            // 4. Update Stats
+            updateDebugStats(finalHeaderUsed, availH, rowH, screenH);
+
+            // 5. Apply to Grid
             const grid = document.querySelector('.timegrid');
             if (grid) {
-                const h = window.innerHeight;
-                // Approx header size if not loaded
-                const used = 100;
-                const rowH = (h - used) / 17;
-
                 grid.style.display = 'grid';
                 grid.style.gridTemplateRows = `auto repeat(17, ${rowH}px)`;
                 grid.style.height = '100%';
                 grid.style.overflow = 'hidden';
             }
+
+            // 6. Force CSS Variable just in case
+            document.documentElement.style.setProperty('--js-row-height', `${rowH}px`);
+
         } catch (e) {
             console.error('Layout force failed', e);
         }
@@ -69,7 +109,7 @@ window.onerror = function (msg, url, line, col, error) {
     // Run immediately and on resize
     forceImmediateLayout();
     window.addEventListener('resize', forceImmediateLayout);
-    setInterval(forceImmediateLayout, 1000); // Keep forcing it
+    setInterval(forceImmediateLayout, 500); // Aggressive 500ms check
 
     let currentDate = new Date();
     let blocks = []; // Combined routines + local + calendar blocks
