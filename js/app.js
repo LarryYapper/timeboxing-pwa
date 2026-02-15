@@ -1,12 +1,12 @@
 /**
  * app.js - Main application logic
- * Version: 1.44
+ * Version: 1.45
  */
-console.log('Timeboxing App v1.44 loaded');
+console.log('Timeboxing App v1.45 loaded');
 
 (function () {
     // State
-    const APP_VERSION = 'v1.44';
+    const APP_VERSION = 'v1.45';
     let currentDate = new Date();
     let blocks = []; // Combined routines + local + calendar blocks
     let routineBlocks = [];
@@ -1206,14 +1206,18 @@ console.log('Timeboxing App v1.44 loaded');
         editingBlockId = block.id;
 
         elements.blockTitle.value = block.title;
+        // Ensure strictly HH:mm (24h) for input type="time"
         elements.blockStart.value = block.startTime;
         elements.blockEnd.value = block.endTime;
         elements.blockNotes.value = block.notes || '';
 
-        // Set category
-        elements.categoryPicker.querySelectorAll('.category-btn').forEach(btn => {
-            btn.classList.toggle('selected', btn.dataset.category === block.category);
-        });
+        // Set category (Hidden in UI now, but we keep logic to avoid errors)
+        const buttons = elements.categoryPicker.querySelectorAll('.category-btn');
+        if (buttons.length > 0) {
+            buttons.forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.category === block.category);
+            });
+        }
 
         // Hide delete button for calendar events only
         elements.deleteBlockBtn.style.display = block.fromCalendar ? 'none' : 'block';
@@ -1223,6 +1227,7 @@ console.log('Timeboxing App v1.44 loaded');
         elements.blockTitle.disabled = isCalendarEvent;
         elements.blockStart.disabled = isCalendarEvent;
         elements.blockEnd.disabled = isCalendarEvent;
+        // Elements disabled for category picker unnecessary if hidden
         elements.categoryPicker.querySelectorAll('.category-btn').forEach(btn => {
             btn.disabled = isCalendarEvent;
         });
