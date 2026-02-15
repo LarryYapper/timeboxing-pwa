@@ -3,10 +3,10 @@
  * Provides offline functionality and caching
  */
 
-const CACHE_NAME = 'timeboxing-v92';
+const CACHE_NAME = 'timeboxing-v93';
 const STATIC_ASSETS = [
     './',
-    './index.html',
+    './app.html',
     './css/style.css?v=58',
     './js/app.js?v=92',
     './js/calendar.js?v=32',
@@ -67,7 +67,7 @@ self.addEventListener('fetch', (event) => {
     if (request.mode === 'navigate') {
         event.respondWith(
             fetch(request)
-                .catch(() => caches.match('./index.html'))
+                .catch(() => caches.match('./app.html'))
         );
         return;
     }
