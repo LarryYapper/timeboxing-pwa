@@ -1,8 +1,8 @@
 /**
  * app.js - Main application logic
- * Version: 1.63
+ * Version: 1.65
  */
-console.log('Timeboxing App v1.63 loaded');
+console.log('Timeboxing App v1.65 loaded');
 
 // GLOBAL ERROR HANDLER
 window.onerror = function (msg, url, line, col, error) {
@@ -27,7 +27,7 @@ window.onerror = function (msg, url, line, col, error) {
 
 (function () {
     // State
-    const APP_VERSION = 'v1.63';
+    const APP_VERSION = 'v1.65';
 
     // IMMEDIATE LAYOUT FORCE
     function forceImmediateLayout() {
@@ -66,9 +66,10 @@ window.onerror = function (msg, url, line, col, error) {
             const finalHeaderUsed = headerUsed > 0 ? headerUsed : 100;
 
             // 3. Calculate Row
-            // -12px top padding, -2px borders/safety
-            const availH = screenH - finalHeaderUsed - 12 - 2;
-            const rowH = Math.max(10, availH / 17); // Min 10px prevents crash
+            // -0px top padding (removed), -0px borders/safety (tight fit)
+            // We want to fill the space EXACTLY.
+            const availH = screenH - finalHeaderUsed;
+            const rowH = availH / 17;
 
             // 4. Update Stats - DISABLED FOR PRODUCTION
             let stats = document.getElementById('layout-stats');
@@ -95,11 +96,6 @@ window.onerror = function (msg, url, line, col, error) {
     forceImmediateLayout();
     window.addEventListener('resize', forceImmediateLayout);
     setInterval(forceImmediateLayout, 1000); // Keep forcing it
-
-    // Run immediately and on resize
-    forceImmediateLayout();
-    window.addEventListener('resize', forceImmediateLayout);
-    setInterval(forceImmediateLayout, 500); // Aggressive 500ms check
 
     let currentDate = new Date();
     let blocks = []; // Combined routines + local + calendar blocks
