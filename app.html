@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#5d4e37">
+    <meta name="description" content="Timeboxing - Denní plánování s Google Calendar">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <title>Timeboxing Loading...</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
+    <link rel="apple-touch-icon" href="icons/icon-192.svg">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/style.css?v=58">
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-compact">
+                <h1 class="logo">Timeboxing</h1>
+
+                <div class="date-compact">
+                    <button id="prev-day" class="btn btn-icon btn-sm" aria-label="Předchozí den">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <span id="current-date" class="date-text"></span>
+                    <button id="next-day" class="btn btn-icon btn-sm" aria-label="Následující den">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                    <!-- Today button removed -->
+                </div>
+
+                <div class="header-actions">
+
+                    <button id="theme-mode-btn" class="btn btn-icon btn-sm" aria-label="Přepnout režim"
+                        title="Přepnout režim (Tmavý/Světlý)">
+                        <span class="icon">🌙</span>
+                    </button>
+
+                    <button id="quick-sync-btn" class="btn btn-icon btn-sm" aria-label="Rychlá synchronizace"
+                        title="Rychlá synchronizace (Stáhnout změny)">
+                        <!-- Sync Icon (Arrows) -->
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                            <path d="M3 3v5h5"></path>
+                            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+                            <path d="M16 21h5v-5"></path>
+                        </svg>
+                    </button>
+
+                    <button id="add-block-btn-header" class="btn btn-primary btn-sm btn-icon" aria-label="Přidat blok"
+                        title="Přidat blok">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+
+                    <button id="sync-calendar-btn" class="btn btn-icon btn-sm" aria-label="Synchronizovat kalendář"
+                        title="Synchronizovat kalendář" hidden>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m0 0a9 9 0 0 1 9-9m-9 9a9 9 0 0 0 9 9">
+                            </path>
+                        </svg>
+                    </button>
+
+                    <button id="reload-app-btn" class="btn btn-icon btn-sm" aria-label="Restartovat aplikaci"
+                        title="Restartovat aplikaci (Načíst novou verzi)">
+                        <!-- Power Icon -->
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                            <line x1="12" y1="2" x2="12" y2="12"></line>
+                        </svg>
+                    </button>
+
+                    <button id="google-signin-btn" class="btn btn-google btn-sm" aria-label="Přihlásit se přes Google"
+                        title="Přihlásit se">
+                        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+                            <path fill="#4285F4"
+                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                            <path fill="#34A853"
+                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                            <path fill="#FBBC05"
+                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                            <path fill="#EA4335"
+                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                        </svg>
+                        <span class="google-btn-text">G</span>
+                    </button>
+                </div>
+            </div>
+
+            <blockquote class="quote">
+                „Co dělám každý den, je důležitější než to, co dělám jednou za čas."
+                <cite>– Gretchen Rubin</cite>
+            </blockquote>
+        </header>
+
+        <!-- Smart Input -->
+        <div class="smart-input-container">
+            <div class="smart-input-wrapper">
+                <input type="text" id="smart-input" class="smart-input"
+                    placeholder="Např. 'Meeting v 14:00 na 1 hodinu' nebo 'Oběd 12:30 30 minut'" autocomplete="off">
+                <button id="add-block-btn" class="btn btn-primary" aria-label="Přidat blok">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </button>
+            </div>
+            <div id="input-feedback" class="input-feedback"></div>
+        </div>
+
+        <!-- Time Grid -->
+        <main class="timegrid-container">
+            <div id="allday-events" class="allday-events" hidden></div>
+            <div class="timegrid" id="timegrid">
+                <!-- Time slots will be generated by JavaScript -->
+            </div>
+        </main>
+
+        <!-- Block Editor Modal -->
+        <div id="block-modal" class="modal" hidden>
+            <div class="modal-backdrop"></div>
+            <div class="modal-content">
+                <h2 class="modal-title">Upravit blok</h2>
+                <form id="block-form">
+                    <div class="form-group">
+                        <label for="block-title">Název</label>
+                        <input type="text" id="block-title" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="block-start">Začátek</label>
+                            <input type="time" id="block-start" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="block-end">Konec</label>
+                            <input type="time" id="block-end" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Kategorie</label>
+                        <div class="category-picker" id="category-picker">
+                            <button type="button" class="category-btn" data-category="focus"
+                                style="--cat-color: var(--color-task-focus)">Focus</button>
+                            <button type="button" class="category-btn" data-category="admin"
+                                style="--cat-color: var(--color-task-admin)">Admin</button>
+                            <button type="button" class="category-btn" data-category="creative"
+                                style="--cat-color: var(--color-task-creative)">Creative</button>
+                            <button type="button" class="category-btn" data-category="deepwork"
+                                style="--cat-color: var(--color-task-deepwork)">Deep Work</button>
+                            <button type="button" class="category-btn" data-category="energy"
+                                style="--cat-color: var(--color-task-energy)">Energy</button>
+                            <button type="button" class="category-btn" data-category="other"
+                                style="--cat-color: var(--color-task-other)">Jiné</button>
+
+                            <!-- Routine categories hidden or secondary if desired, but keeping all for now -->
+                            <button type="button" class="category-btn" data-category="routine"
+                                style="--cat-color: var(--color-routine)">Rutina</button>
+                            <button type="button" class="category-btn" data-category="meal"
+                                style="--cat-color: var(--color-meal)">Jídlo</button>
+                            <button type="button" class="category-btn" data-category="work"
+                                style="--cat-color: var(--color-work)">Práce</button>
+                            <button type="button" class="category-btn" data-category="recharge"
+                                style="--cat-color: var(--color-recharge)">Recharge</button>
+                            <button type="button" class="category-btn" data-category="relax"
+                                style="--cat-color: var(--color-relax)">Relax</button>
+                            <button type="button" class="category-btn" data-category="sleep"
+                                style="--cat-color: var(--color-sleep)">Spánek</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="block-notes">Poznámky</label>
+                        <textarea id="block-notes" class="form-textarea" rows="3"
+                            placeholder="Co budu dělat..."></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" id="delete-block-btn" class="btn btn-danger">Smazat</button>
+                        <button type="button" id="cancel-modal-btn" class="btn btn-secondary">Zrušit</button>
+                        <button type="submit" class="btn btn-primary">Uložit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <footer style="text-align: center; font-size: 10px; color: #888; margin-top: 20px; padding-bottom: 10px;">
+            &nbsp;
+        </footer>
+    </div>
+
+    <!-- Scripts - Updated to latest versions -->
+    <script src="js/storage.js?v=24"></script>
+    <script src="js/routines.js?v=23"></script>
+    <script src="js/smartinput.js?v=43"></script>
+    <script src="js/timeblocks.js?v=52"></script>
+    <script src="js/calendar.js?v=32"></script>
+    <script src="js/app.js?v=108"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js?v=108')
+                    .then(reg => console.log('SW registered'))
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
+</body>
+
+</html>
