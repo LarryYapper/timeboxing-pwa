@@ -1,8 +1,8 @@
 /**
  * app.js - Main application logic
- * Version: 1.05
+ * Version: 1.06
  */
-console.log('Timeboxing App v1.05 loaded');
+console.log('Timeboxing App v1.06 loaded');
 // alert('App Updated to v86'); 
 
 (function () {
@@ -143,8 +143,14 @@ console.log('Timeboxing App v1.05 loaded');
                 }
             });
         }
+    }
 
-
+    /**
+     * Build the time grid HTML - Paper template style with table layout
+     */
+    function buildTimeGrid() {
+        const grid = elements.timegrid;
+        grid.innerHTML = '';
 
         // Create header row with time markers
         const header = document.createElement('div');
