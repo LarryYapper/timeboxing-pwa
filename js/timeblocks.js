@@ -77,11 +77,16 @@ const TimeBlocks = (function () {
      * Render all blocks into the grid cells
      */
     function render(blocks) {
-        if (!gridElement) return;
+        console.log('TimeBlocks.render called with', blocks ? blocks.length : 'null', 'blocks');
+        if (!gridElement) {
+            console.error('TimeBlocks: gridElement is null');
+            return;
+        }
         currentBlocks = blocks;
 
         // Clear all existing block content from cells
         const allSlots = gridElement.querySelectorAll('.time-slot');
+        console.log('TimeBlocks: Found', allSlots.length, 'time-slots to clear');
         allSlots.forEach(slot => {
             slot.innerHTML = '';
             slot.classList.remove('has-block', 'block-start', 'block-middle', 'block-end');
@@ -106,6 +111,7 @@ const TimeBlocks = (function () {
 
         // Place each block with lane info
         sortedBlocks.forEach(block => {
+            // console.log('Placing block', block.id);
             placeBlockInCells(block, lanes[block.id]);
         });
     }
