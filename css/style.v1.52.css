@@ -634,8 +634,7 @@ body {
     border-right: 1px solid var(--color-border);
     /* border-bottom: 1px solid var(--color-border); -- Managed by row */
     position: relative;
-    overflow: hidden !important;
-    /* Prevent content from expanding cell */
+    overflow: visible;
     box-sizing: border-box;
     background-color: #ffffff;
     cursor: pointer;
