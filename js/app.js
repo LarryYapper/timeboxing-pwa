@@ -1087,10 +1087,22 @@ window.onerror = function (msg, url, line, col, error) {
         routineBlocks = Routines.getRoutinesForDate(dateStr);
 
         // Load local blocks (user-created + cached calendar)
-        const allLocalBlocks = await Storage.getBlocksByDate(dateStr);
+        // PROTECT against Storage hanging
+        let allLocalBlocks = [];
+        try {
+            const storagePromise = Storage.getBlocksByDate(dateStr);
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Storage read timeout')), 2000)
+            );
+            allLocalBlocks = await Promise.race([storagePromise, timeoutPromise]);
+        } catch (e) {
+            console.error('Storage read failed or timed out:', e);
+            // alert('Debug: Storage read failed - App running in reduced mode');
+        }
 
         // Load live calendar events
         calendarBlocks = await Calendar.getEventsForDate(dateStr);
+
 
         // Deduplication Logic:
         // If we successfully fetched live events (calendarBlocks is not empty), use them.
