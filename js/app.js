@@ -1,8 +1,8 @@
 /**
  * app.js - Main application logic
- * Version: 0.88
+ * Version: 0.89
  */
-console.log('Timeboxing App v0.88 loaded');
+console.log('Timeboxing App v0.89 loaded');
 // alert('App Updated to v86'); 
 
 (function () {
@@ -29,7 +29,7 @@ console.log('Timeboxing App v0.88 loaded');
         currentYear: document.getElementById('current-year'),
         prevDay: document.getElementById('prev-day'),
         nextDay: document.getElementById('next-day'),
-        // todayBtn: document.getElementById('today-btn'), // Removed
+        // todayBtn removed
         googleSigninBtn: document.getElementById('google-signin-btn'),
         smartInput: document.getElementById('smart-input'),
         addBlockBtn: document.getElementById('add-block-btn'),
