@@ -1,12 +1,12 @@
 /**
  * app.js - Main application logic
- * Version: 1.24
+ * Version: 1.25
  */
-console.log('Timeboxing App v1.24 loaded');
+console.log('Timeboxing App v1.25 loaded');
 
 (function () {
     // State
-    const APP_VERSION = 'v1.24';
+    const APP_VERSION = 'v1.25';
     let currentDate = new Date();
     let blocks = []; // Combined routines + local + calendar blocks
     let routineBlocks = [];
@@ -1190,6 +1190,31 @@ console.log('Timeboxing App v1.24 loaded');
 
         if (hasBlock) {
             indicator.classList.add('contrast-mode');
+        }
+
+        // Logic to flip block title if time is "above" (obscuring) it
+        // The title is only in the first cell of the block.
+        // If currentSlot HAS a .block-title, we are in the first cell.
+        const blockFill = currentSlot.querySelector('.time-block-fill');
+        if (blockFill) {
+            const titleEl = blockFill.querySelector('.block-title');
+            if (titleEl) {
+                // If we are in the first 0-10 minutes of the slot (Left side), move title to Right
+                // If we are past 10 minutes (Right side), keep/move title to Left
+                if (minutesInSlot < 11) {
+                    blockFill.style.justifyContent = 'flex-end';
+                    blockFill.style.textAlign = 'right'; // For text alignment
+                    // Remove right margin, add left margin
+                    titleEl.style.marginRight = '0';
+                    titleEl.style.marginLeft = 'var(--spacing-xs)';
+                } else {
+                    // Reset to default
+                    blockFill.style.justifyContent = 'flex-start';
+                    blockFill.style.textAlign = 'left';
+                    titleEl.style.marginRight = 'var(--spacing-xs)';
+                    titleEl.style.marginLeft = '0';
+                }
+            }
         }
 
         // Append to the row's slot area (after the time label)
