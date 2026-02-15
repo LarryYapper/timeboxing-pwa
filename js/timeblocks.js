@@ -559,21 +559,6 @@ const TimeBlocks = (function () {
         return totalMinutes;
     }
 
-    // Public API
-    return {
-        init,
-        render,
-        renderAllDay,
-        timeToPosition,
-        timeToSlotIndex,
-        slotIndexToTime,
-        getBlockSlotCount,
-        GRID_START_HOUR,
-        GRID_END_HOUR,
-        HOUR_HEIGHT: 60,
-        SLOT_HEIGHT: 15
-    };
-
     /**
      * Render all-day events into their dedicated popover list
      */
@@ -610,4 +595,19 @@ const TimeBlocks = (function () {
             list.appendChild(item);
         });
     }
+
+    // Public API
+    return {
+        init,
+        render,
+        renderAllDay,
+        timeToPosition,
+        timeToSlotIndex,
+        slotIndexToTime,
+        getBlockSlotCount,
+        GRID_START_HOUR,
+        GRID_END_HOUR,
+        HOUR_HEIGHT: 60,
+        SLOT_HEIGHT: 15
+    };
 })();

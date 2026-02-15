@@ -1606,6 +1606,7 @@ window.onerror = function (msg, url, line, col, error) {
         if (slotCells.length === 0) return;
 
         const cellWidth = slotCells[0].offsetWidth;
+        if (!cellWidth) return; // Not visible yet
 
         // Clean up previous highlights
         elements.timegrid.querySelectorAll('.time-label.current-hour-label')
@@ -1620,12 +1621,27 @@ window.onerror = function (msg, url, line, col, error) {
         const minutesInSlot = minutes % 15;
         const percentInSlot = minutesInSlot / 15;
 
-        // Left position relative to the time label = (slot index + percent in slot) * cell width
-        const leftPosition = (slotIndex + percentInSlot) * cellWidth;
+        // CRITICAL FIX: The row contains a Label + 4 Slots.
+        // We want the position RELATIVE TO THE ROW.
+        // Steps:
+        // 1. Get width of the Label (first child)
+        // 2. Add (slotIndex * cellWidth)
+        // 3. Add (percentInSlot * cellWidth)
+
+        let labelWidth = 50; // Default fallback
+        if (currentLabel) {
+            labelWidth = currentLabel.offsetWidth || 50;
+        }
+
+        // Left position = Label Width + (Slot Index * Cell Width) + (Percent * Cell Width)
+        const leftPosition = labelWidth + (slotIndex * cellWidth) + (percentInSlot * cellWidth);
 
         const indicator = document.createElement('div');
         indicator.className = 'current-time-indicator';
         indicator.style.left = `${leftPosition}px`;
+
+        // Ensure row is relative so absolute positioning works
+        currentRow.style.position = 'relative';
 
         // Format time for badge (e.g. "14:25")
         const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
