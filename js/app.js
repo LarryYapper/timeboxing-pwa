@@ -5,23 +5,27 @@
 console.log('Timeboxing App v1.65 loaded');
 
 // GLOBAL ERROR HANDLER
+// GLOBAL ERROR HANDLER
 window.onerror = function (msg, url, line, col, error) {
-    let debug = document.getElementById('err-debug');
-    if (!debug) {
-        debug = document.createElement('div');
-        debug.id = 'err-debug';
-        debug.style.position = 'fixed';
-        debug.style.bottom = '0';
-        debug.style.left = '0';
-        debug.style.width = '100%';
-        debug.style.background = 'red';
-        debug.style.color = 'white';
-        debug.style.fontSize = '12px';
-        debug.style.padding = '5px';
-        debug.style.zIndex = '99999';
-        document.body.appendChild(debug);
+    // Ignore Google API errors, they are noisy
+    if (msg && msg.includes && msg.includes('Script error')) return false;
+
+    const errorText = `Global Error: ${msg}\nLine: ${line}\nURL: ${url}`;
+    console.error(errorText);
+
+    // Create a visible error box
+    const errorBox = document.createElement('div');
+    errorBox.style.cssText = 'position:fixed;top:10px;left:10px;right:10px;background:red;color:white;padding:15px;z-index:999999;font-weight:bold;border:2px solid white;border-radius:8px;font-family:sans-serif;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+    errorBox.innerHTML = `<strong>Aplikace narazila na chybu:</strong><br>${msg}<br><span style="font-size:0.8em;opacity:0.8">Řádek ${line}</span><br><br><button onclick="this.parentElement.remove()" style="color:black;padding:5px 10px;">Zavřít</button> <button onclick="location.reload()" style="color:black;padding:5px 10px;">Obnovit</button>`;
+
+    // Ensure body exists before appending
+    if (document.body) {
+        document.body.appendChild(errorBox);
+    } else {
+        // If body doesn't exist yet (very early error), try to write to document
+        document.write('<div style="background:red;color:white;padding:20px;">CRITICAL ERROR: ' + msg + '</div>');
     }
-    debug.textContent = `ERR: ${msg} @ L${line}`;
+
     return false;
 };
 
@@ -171,11 +175,40 @@ window.onerror = function (msg, url, line, col, error) {
     async function init() {
         console.log(`Initializing Timeboxing App ${APP_VERSION}...`);
 
+        // 1. CRITICAL: Set up Event Listeners FIRST so buttons work immediately
+        try {
+            setupEventListeners();
+            console.log('Event listeners initialized');
+        } catch (e) {
+            console.error('Failed to setup event listeners:', e);
+            alert('Critical Error: Buttons setup failed. ' + e.message);
+        }
+
+        // 2. CRITICAL: Show Date immediately
+        try {
+            updateDateDisplay();
+            // Also update time indicator immediately
+            updateCurrentTimeIndicator();
+        } catch (e) {
+            console.error('Failed to update date display:', e);
+        }
+
+
+
         // Inject version into UI
         document.title = `Timeboxing ${APP_VERSION}`;
         const logo = document.querySelector('.logo');
         if (logo) logo.textContent = `Timeboxing ${APP_VERSION}`;
 
+        // Initialize Theme (Default to Dark)
+        initTheme();
+
+        // Build the time grid (Visuals)
+        buildTimeGrid();
+        TimeBlocks.init(elements.timegrid);
+
+
+        // 3. DATA LOADING (Risky parts)
         // Initialize storage with timeout race to prevent white screen hang
         try {
             const storageInitPromise = Storage.init();
@@ -194,26 +227,17 @@ window.onerror = function (msg, url, line, col, error) {
             document.body.appendChild(errDiv);
         }
 
-        // Build the time grid
-        buildTimeGrid();
-
-        // Initialize time blocks system - pass the grid element directly
-        TimeBlocks.init(elements.timegrid);
-
-        // Initialize Theme (Default to Dark)
-        initTheme();
-
-        // Set up event listeners
-        setupEventListeners();
-
         // Initialize Google Calendar (don't wait for it)
         initCalendar();
 
         // Load today's data
-        await loadDate(currentDate);
+        try {
+            await loadDate(currentDate);
+        } catch (e) {
+            console.error('Failed to load date:', e);
+            alert('Failed to load data for today: ' + e.message);
+        }
 
-        // Update current time indicator
-        updateCurrentTimeIndicator();
         setInterval(updateCurrentTimeIndicator, 60000); // Update every minute
 
         // Quick Sync Listener
