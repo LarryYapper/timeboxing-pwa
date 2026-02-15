@@ -68,15 +68,15 @@
     --color-task-deepwork: #090909;
     --color-task-energy: #F39242;
 
-    /* Colors - UI (Brown palette) */
-    --color-bg: #1a1510;
-    --color-bg-secondary: #2a2218;
-    --color-bg-tertiary: #3a3020;
-    --color-surface: #4a3d2a;
-    --color-border: #5d4e37;
-    --color-text: #f5f0e8;
-    --color-text-secondary: #c9b89a;
-    --color-text-muted: #8a7a60;
+    /* Colors - UI (Neutral/Black palette) */
+    --color-bg: #000000;
+    --color-bg-secondary: #121212;
+    --color-bg-tertiary: #1e1e1e;
+    --color-surface: #000000;
+    --color-border: #333333;
+    --color-text: #e0e0e0;
+    --color-text-secondary: #a0a0a0;
+    --color-text-muted: #666666;
     --color-danger: #ef4444;
     --color-success: #22c55e;
 
@@ -214,7 +214,8 @@ body {
 .app-container {
     max-width: 800px;
     margin: 0 auto;
-    padding: var(--spacing-md);
+    padding: 0;
+    /* Remove padding to fill screen */
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -532,12 +533,13 @@ body {
     overflow: hidden;
     /* Disable scroll here too */
     padding-bottom: 0;
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    border: 2px solid var(--color-border);
+    background: transparent;
+    border-radius: 0;
+    border: none;
     position: relative;
     display: flex;
     flex-direction: column;
+    margin: 0;
 }
 
 .timegrid {
