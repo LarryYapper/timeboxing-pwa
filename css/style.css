@@ -591,13 +591,13 @@ body {
 
 .timegrid-row {
     display: flex;
-    /* height: var(--grid-hour-height); -- REMOVED */
-    flex: 1;
-    /* Grow to fill space */
-    min-height: 0;
-    /* Allow getting very small */
+    flex: 1 1 auto !important;
+    /* Force flex grow/shrink */
+    min-height: 0 !important;
+    /* Force min-height */
+    height: auto !important;
+    /* Override any fixed height */
     border-bottom: 1px solid var(--color-border);
-    /* Explicit border for separation */
 }
 
 /* ... nth child colors ... */
