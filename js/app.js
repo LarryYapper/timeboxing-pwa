@@ -1,8 +1,8 @@
 /**
  * app.js - Main application logic
- * Version: 0.89
+ * Version: 0.90
  */
-console.log('Timeboxing App v0.89 loaded');
+console.log('Timeboxing App v0.90 loaded');
 // alert('App Updated to v86'); 
 
 (function () {
