@@ -1122,7 +1122,15 @@ window.onerror = function (msg, url, line, col, error) {
         });
 
         // Combine all blocks (filtering routines that overlap calendar/are hidden)
-        blocks = [...getFilteredRoutines(), ...localBlocks, ...calendarBlocks];
+        const filteredRoutines = getFilteredRoutines();
+        blocks = [...filteredRoutines, ...localBlocks, ...calendarBlocks];
+
+        // DEBUG: Diagnose missing blocks
+        const debugMsg = `DEBUG INFO:\nDate: ${dateStr}\nRoutines (Total): ${routineBlocks.length}\nRoutines (Filtered): ${filteredRoutines.length}\nLocal Blocks: ${localBlocks.length}\nCalendar Events: ${calendarBlocks.length}\nTotal Rendered: ${blocks.length}`;
+        console.log(debugMsg);
+        // Uncomment to show alert to user
+        alert(debugMsg);
+
         renderBlocks();
     }
 
