@@ -1,8 +1,8 @@
 /**
  * app.js - Main application logic
- * Version: 0.83
+ * Version: 0.84
  */
-console.log('Timeboxing App v0.83 loaded');
+console.log('Timeboxing App v0.84 loaded');
 // alert('App Updated to v64'); // Uncomment if needed, but the button should be enough
 
 (function () {
@@ -29,7 +29,7 @@ console.log('Timeboxing App v0.83 loaded');
         currentYear: document.getElementById('current-year'),
         prevDay: document.getElementById('prev-day'),
         nextDay: document.getElementById('next-day'),
-        todayBtn: document.getElementById('today-btn'),
+        // todayBtn: document.getElementById('today-btn'), // Removed
         googleSigninBtn: document.getElementById('google-signin-btn'),
         smartInput: document.getElementById('smart-input'),
         addBlockBtn: document.getElementById('add-block-btn'),
@@ -47,6 +47,7 @@ console.log('Timeboxing App v0.83 loaded');
         cancelModalBtn: document.getElementById('cancel-modal-btn'),
         syncCalendarBtn: document.getElementById('sync-calendar-btn'),
         reloadAppBtn: document.getElementById('reload-app-btn'),
+        themeModeBtn: document.getElementById('theme-mode-btn'),
     };
 
     /**
@@ -61,6 +62,9 @@ console.log('Timeboxing App v0.83 loaded');
 
         // Initialize time blocks system - pass the grid element directly
         TimeBlocks.init(elements.timegrid);
+
+        // Initialize Theme (Default to Dark)
+        initTheme();
 
         // Set up event listeners
         setupEventListeners();
@@ -80,6 +84,44 @@ console.log('Timeboxing App v0.83 loaded');
             elements.reloadAppBtn.addEventListener('click', () => {
                 if (confirm('Restartovat a načíst novou verzi?')) {
                     window.location.reload(true);
+                }
+            });
+        }
+    }
+
+    /**
+     * Initialize dark/light mode
+     */
+    function initTheme() {
+        // Default is dark mode (classes on body/html not needed for dark as it's default in CSS)
+        // Check local storage for override
+        const storedTheme = localStorage.getItem('theme');
+
+        if (storedTheme === 'light') {
+            document.body.classList.add('light-mode');
+            if (elements.themeModeBtn) {
+                elements.themeModeBtn.querySelector('.icon').textContent = '☀️';
+            }
+        } else {
+            // Ensure dark mode
+            document.body.classList.remove('light-mode');
+            if (elements.themeModeBtn) {
+                elements.themeModeBtn.querySelector('.icon').textContent = '🌙';
+            }
+        }
+
+        // Toggle Listener
+        if (elements.themeModeBtn) {
+            elements.themeModeBtn.addEventListener('click', () => {
+                document.body.classList.toggle('light-mode');
+                const isLight = document.body.classList.contains('light-mode');
+
+                if (isLight) {
+                    localStorage.setItem('theme', 'light');
+                    elements.themeModeBtn.querySelector('.icon').textContent = '☀️';
+                } else {
+                    localStorage.setItem('theme', 'dark'); // or remove item
+                    elements.themeModeBtn.querySelector('.icon').textContent = '🌙';
                 }
             });
         }
