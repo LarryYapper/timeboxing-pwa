@@ -3,7 +3,7 @@
     "short_name": "Timeboxing",
     "description": "Denní plánování s Google Calendar integrací",
     "lang": "cs",
-    "start_url": "./",
+    "start_url": "./app.html",
     "display": "standalone",
     "background_color": "#0f0f1a",
     "theme_color": "#5d4e37",
