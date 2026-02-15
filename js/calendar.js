@@ -293,8 +293,23 @@ const Calendar = (function () {
             const calendarListResponse = await gapi.client.calendar.calendarList.list({
                 minAccessRole: 'reader'
             });
+            // Debug: Log all calendar names
+            if (calendarListResponse.result.items) {
+                console.group('Available Calendars:');
+                calendarListResponse.result.items.forEach(c => console.log(`"${c.summary}" (ID: ${c.id})`));
+                console.groupEnd();
+            }
+
             const calendars = (calendarListResponse.result.items || [])
-                .filter(cal => cal.summary !== '🏥 Anet – Nemocnice');
+                .filter(cal => {
+                    const name = (cal.summary || '').toLowerCase();
+                    // Robust check: Filter if it contains both "anet" and "nemocnice"
+                    if (name.includes('anet') && name.includes('nemocnice')) {
+                        console.log(`Filtering out calendar: ${cal.summary}`);
+                        return false;
+                    }
+                    return true;
+                });
 
             // 2. Fetch events for each calendar in parallel
             const eventPromises = calendars.map(async (calendar) => {
