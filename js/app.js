@@ -1579,6 +1579,7 @@ window.onerror = function (msg, url, line, col, error) {
      * Update current time indicator - VERTICAL line based on current time
      */
     function updateCurrentTimeIndicator() {
+        console.log('DEBUG: updateCurrentTimeIndicator called');
         // Remove existing indicator
         const existing = document.querySelector('.current-time-indicator');
         if (existing) existing.remove();
@@ -1590,19 +1591,30 @@ window.onerror = function (msg, url, line, col, error) {
         const now = new Date();
         const hours = now.getHours();
         const minutes = now.getMinutes();
+        console.log(`DEBUG: Time: ${hours}:${minutes}, Grid: ${TimeBlocks.GRID_START_HOUR}-${TimeBlocks.GRID_END_HOUR}`);
 
         // Only show during grid hours
-        if (hours < TimeBlocks.GRID_START_HOUR || hours > TimeBlocks.GRID_END_HOUR) return;
+        if (hours < TimeBlocks.GRID_START_HOUR || hours > TimeBlocks.GRID_END_HOUR) {
+            console.log('DEBUG: Outside grid hours');
+            return;
+        }
 
         // Find the current hour row
         const currentRow = elements.timegrid.querySelector(`[data-hour="${hours}"]`);
-        if (!currentRow) return;
+        if (!currentRow) {
+            console.log(`DEBUG: Row for hour ${hours} not found`);
+            return;
+        }
 
         const slotCells = currentRow.querySelectorAll('.time-slot');
         if (slotCells.length === 0) return;
 
         const cellWidth = slotCells[0].offsetWidth;
-        if (!cellWidth) return; // Not visible yet
+        console.log(`DEBUG: Cell width: ${cellWidth}`);
+        if (!cellWidth) {
+            console.log('DEBUG: Cell width 0/undefined');
+            return; // Not visible yet
+        }
 
         // Clean up previous highlights
         elements.timegrid.querySelectorAll('.time-label.current-hour-label')
