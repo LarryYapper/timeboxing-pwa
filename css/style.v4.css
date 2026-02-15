@@ -555,32 +555,31 @@ body {
 /* Header row with time markers */
 .timegrid-header {
     display: flex;
-    /* Keep flex for internal cell layout */
-    background: var(--color-bg-tertiary);
-    z-index: 10;
-    /* No flex-shrink needed in grid */
-}
-
-/* ... header cells ... */
-.timegrid-header-cell {
-    flex: 1;
-    min-width: 0;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-    color: var(--color-text-muted);
-    text-align: center;
-    border-bottom: 2px solid var(--color-border);
-    border-right: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--color-bg);
+    height: 30px;
+    /* Fixed height to match calculation */
     box-sizing: border-box;
 }
 
+.timegrid-header-cell {
+    flex: 1;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 29px;
+    /* Vertically center */
+    border-right: 1px solid var(--border-color);
+    padding: 0;
+}
+
+/* Hide first cell border/padding to align with time column */
 .timegrid-header-cell:first-child {
     width: var(--grid-time-width);
     min-width: var(--grid-time-width);
     flex: none;
-    text-align: right;
-    padding-right: var(--spacing-md);
+    border-right: 2px solid var(--color-border);
+    background: var(--color-bg-secondary);
 }
 
 .timegrid-header-cell:last-child {

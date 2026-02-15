@@ -126,6 +126,8 @@ window.onerror = function (msg, url, line, col, error) {
         // todayBtn removed
         googleSigninBtn: document.getElementById('google-signin-btn'),
         smartInput: document.getElementById('smart-input'),
+        // Fixed: Add smartInputContainer
+        smartInputContainer: document.querySelector('.smart-input-container'),
         addBlockBtn: document.getElementById('add-block-btn'),
         headerAddBlockBtn: document.getElementById('add-block-btn-header'),
         inputFeedback: document.getElementById('input-feedback'),
