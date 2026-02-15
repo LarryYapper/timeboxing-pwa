@@ -573,8 +573,8 @@ body {
     position: relative;
     overflow: visible;
     box-sizing: border-box;
-    /* Lighter background for empty slots to stand out */
-    background-color: var(--color-bg-secondary);
+    /* Full white background for empty slots as requested */
+    background-color: #ffffff;
 }
 
 .time-slot:last-child {
