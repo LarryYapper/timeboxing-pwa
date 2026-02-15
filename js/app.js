@@ -1,12 +1,76 @@
 /**
  * app.js - Main application logic
- * Version: 1.60
+ * Version: 1.61
  */
-console.log('Timeboxing App v1.60 loaded');
+console.log('Timeboxing App v1.61 loaded');
+
+// GLOBAL ERROR HANDLER - Must run first!
+window.onerror = function (msg, url, line, col, error) {
+    let debug = document.getElementById('err-debug');
+    if (!debug) {
+        debug = document.createElement('div');
+        debug.id = 'err-debug';
+        debug.style.position = 'fixed';
+        debug.style.bottom = '0';
+        debug.style.left = '0';
+        debug.style.width = '100%';
+        debug.style.background = 'red';
+        debug.style.color = 'white';
+        debug.style.fontSize = '12px';
+        debug.style.padding = '5px';
+        debug.style.zIndex = '99999';
+        document.body.appendChild(debug);
+    }
+    debug.textContent = `ERR: ${msg} @ L${line}`;
+    return false;
+};
 
 (function () {
     // State
-    const APP_VERSION = 'v1.60';
+    const APP_VERSION = 'v1.61';
+
+    // IMMEDIATE LAYOUT FORCE - Run before anything else
+    // This ensures blue background/layout even if init() crashes
+    function forceImmediateLayout() {
+        try {
+            document.documentElement.style.height = '100%';
+            document.body.style.height = '100%';
+            document.body.style.overflow = 'hidden';
+            document.body.style.background = '#001a33'; // Deep Blue - Visual Confirm
+
+            const app = document.querySelector('.app-container');
+            if (app) {
+                app.style.height = window.innerHeight + 'px';
+                app.style.display = 'flex';
+                app.style.flexDirection = 'column';
+                app.style.padding = '12px 12px 0 12px';
+                app.style.boxSizing = 'border-box';
+                // app.style.border = '2px solid cyan'; // Debug Border
+            }
+
+            // Force Grid
+            const grid = document.querySelector('.timegrid');
+            if (grid) {
+                const h = window.innerHeight;
+                // Approx header size if not loaded
+                const used = 100;
+                const rowH = (h - used) / 17;
+
+                grid.style.display = 'grid';
+                grid.style.gridTemplateRows = `auto repeat(17, ${rowH}px)`;
+                grid.style.height = '100%';
+                grid.style.overflow = 'hidden';
+            }
+        } catch (e) {
+            console.error('Layout force failed', e);
+        }
+    }
+
+    // Run immediately and on resize
+    forceImmediateLayout();
+    window.addEventListener('resize', forceImmediateLayout);
+    setInterval(forceImmediateLayout, 1000); // Keep forcing it
+
     let currentDate = new Date();
     let blocks = []; // Combined routines + local + calendar blocks
     let routineBlocks = [];
