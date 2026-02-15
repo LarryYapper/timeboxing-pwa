@@ -1139,6 +1139,14 @@ console.log('Timeboxing App v1.08 loaded');
 
         const cellWidth = slotCells[0].offsetWidth;
 
+        // Clean up previous highlights
+        elements.timegrid.querySelectorAll('.time-label.current-hour-label')
+            .forEach(el => el.classList.remove('current-hour-label'));
+
+        // Highlight current label
+        const currentLabel = currentRow.querySelector('.time-label');
+        if (currentLabel) currentLabel.classList.add('current-hour-label');
+
         // Calculate position within the row
         const slotIndex = Math.floor(minutes / 15); // 0-3
         const minutesInSlot = minutes % 15;
