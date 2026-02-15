@@ -152,7 +152,7 @@ const Calendar = (function () {
 
             // Show visible error for debugging
             const msg = err.result?.error?.message || err.message || JSON.stringify(err);
-            alert(`Save Failed: ${msg}\n\nPlease check console for more details.`);
+            // alert(`Save Failed: ${msg}\n\nPlease check console for more details.`);
 
             if (err.status === 401) handleAuthError();
             throw err; // Ensure caller knows
