@@ -132,7 +132,21 @@ window.onerror = function (msg, url, line, col, error) {
         allDayCount: document.getElementById('all-day-count'), // NEW
         inputFeedback: document.getElementById('input-feedback'),
         timegrid: document.getElementById('timegrid'),
-        // ... rest of elements
+        reloadAppBtn: document.getElementById('reload-app-btn'), // NEW
+        quickSyncBtn: document.getElementById('quick-sync-btn'), // NEW
+        themeModeBtn: document.getElementById('theme-mode-btn'), // NEW
+        syncCalendarBtn: document.getElementById('sync-calendar-btn'), // MISSING
+
+        // Modal elements
+        blockModal: document.getElementById('block-modal'),
+        blockTitle: document.getElementById('block-title'),
+        blockStart: document.getElementById('block-start'),
+        blockEnd: document.getElementById('block-end'),
+        categoryPicker: document.getElementById('category-picker'),
+        blockNotes: document.getElementById('block-notes'),
+        deleteBlockBtn: document.getElementById('delete-block-btn'),
+        cancelModalBtn: document.getElementById('cancel-modal-btn'),
+        blockForm: document.getElementById('block-form')
         // ...
     };
 
@@ -456,8 +470,13 @@ window.onerror = function (msg, url, line, col, error) {
         // elements.todayBtn.addEventListener('click', goToToday); // Removed
 
         // Google sign in
-        elements.googleSigninBtn.addEventListener('click', handleGoogleSignIn);
-        elements.syncCalendarBtn.addEventListener('click', handleSyncCalendar);
+        // Google sign in
+        if (elements.googleSigninBtn) {
+            elements.googleSigninBtn.addEventListener('click', handleGoogleSignIn);
+        }
+        if (elements.syncCalendarBtn) {
+            elements.syncCalendarBtn.addEventListener('click', handleSyncCalendar);
+        }
 
         // Smart input
         elements.smartInput.addEventListener('input', handleSmartInputChange);
