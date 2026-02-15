@@ -81,11 +81,7 @@ const SmartInput = (function () {
             return convertToMinutes(match[1], match[2]);
         }
 
-        // Try shorthand "Xh", "Xm"
-        match = input.match(DURATION_PATTERNS.shorthand);
-        if (match) {
-            return convertToMinutes(match[1], match[2]);
-        }
+
 
         return null;
     }
