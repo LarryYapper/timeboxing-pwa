@@ -1,12 +1,12 @@
 /**
  * app.js - Main application logic
- * Version: 1.25
+ * Version: 1.26
  */
-console.log('Timeboxing App v1.25 loaded');
+console.log('Timeboxing App v1.26 loaded');
 
 (function () {
     // State
-    const APP_VERSION = 'v1.25';
+    const APP_VERSION = 'v1.26';
     let currentDate = new Date();
     let blocks = []; // Combined routines + local + calendar blocks
     let routineBlocks = [];
@@ -48,6 +48,7 @@ console.log('Timeboxing App v1.25 loaded');
         syncCalendarBtn: document.getElementById('sync-calendar-btn'),
         reloadAppBtn: document.getElementById('reload-app-btn'),
         themeModeBtn: document.getElementById('theme-mode-btn'),
+        quickSyncBtn: document.getElementById('quick-sync-btn'),
     };
 
     /**
@@ -85,6 +86,11 @@ console.log('Timeboxing App v1.25 loaded');
         // Update current time indicator
         updateCurrentTimeIndicator();
         setInterval(updateCurrentTimeIndicator, 60000); // Update every minute
+
+        // Quick Sync Listener
+        if (elements.quickSyncBtn) {
+            elements.quickSyncBtn.addEventListener('click', syncFromDrive);
+        }
 
         // Reload App Listener - Hard Reset
         if (elements.reloadAppBtn) {
@@ -575,6 +581,50 @@ console.log('Timeboxing App v1.25 loaded');
     function hideSyncStatus() {
         const badge = document.getElementById('sync-status-badge');
         if (badge) badge.style.opacity = '0';
+    }
+
+    /**
+     * Sync data FROM Drive (Manual Pull)
+     */
+    async function syncFromDrive() {
+        if (!Calendar.getSignedInStatus()) {
+            alert('Pro synchronizaci se musíte přihlásit.');
+            return;
+        }
+
+        const btn = elements.quickSyncBtn;
+        const originalContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="icon">↻</span>'; // Spinner-ish
+        showSyncStatus('Syncing...', 'normal');
+
+        try {
+            // 1. Load data from Drive
+            const data = await Calendar.loadData();
+            if (!data) {
+                showSyncStatus('No Data Found', 'warning');
+                return;
+            }
+
+            // 2. Import into Storage
+            await Storage.importBackup(data, true); // true = overwrite local
+
+            // 3. Reload UI
+            await loadDate(currentDate);
+
+            // 4. Update Time Indicator
+            updateCurrentTimeIndicator();
+
+            showSyncStatus('Synced!', 'success');
+        } catch (e) {
+            console.error('Sync failed', e);
+            showSyncStatus('Sync Failed', 'error');
+            alert('Chyba synchronizace: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+            setTimeout(hideSyncStatus, 2000);
+        }
     }
 
     /**
