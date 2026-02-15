@@ -1,12 +1,12 @@
 /**
  * app.js - Main application logic
- * Version: 1.31
+ * Version: 1.32
  */
-console.log('Timeboxing App v1.31 loaded');
+console.log('Timeboxing App v1.32 loaded');
 
 (function () {
     // State
-    const APP_VERSION = 'v1.31';
+    const APP_VERSION = 'v1.32';
     let currentDate = new Date();
     let blocks = []; // Combined routines + local + calendar blocks
     let routineBlocks = [];
@@ -95,6 +95,19 @@ console.log('Timeboxing App v1.31 loaded');
         // Grid Click Listener (Empty Slot -> Add Block)
         if (elements.timegrid) {
             elements.timegrid.addEventListener('click', handleGridClick);
+            // Add touchend for devices that don't fire click well on divs
+            elements.timegrid.addEventListener('touchend', (e) => {
+                // Prevent ghost clicks if this fires handled
+                // But we need to distinguish scroll/drag from tap.
+                // Simple hack: check if it's a quick tap? 
+                // For now, let's just try relying on click first, but if user says "not tappable",
+                // maybe z-index or other overlays are blocking it.
+                // Let's explicitly try to handle it if it was a direct tap on a slot.
+                if (e.target.classList.contains('time-slot')) {
+                    // e.preventDefault(); // Might block scrolling?
+                    handleGridClick(e);
+                }
+            });
         }
 
         // Reload App Listener - Hard Reset
