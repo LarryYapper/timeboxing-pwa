@@ -1,12 +1,12 @@
 /**
  * app.js - Main application logic
- * Version: 1.58
+ * Version: 1.59
  */
-console.log('Timeboxing App v1.58 loaded');
+console.log('Timeboxing App v1.59 loaded');
 
 (function () {
     // State
-    const APP_VERSION = 'v1.58';
+    const APP_VERSION = 'v1.59';
     let currentDate = new Date();
     let blocks = []; // Combined routines + local + calendar blocks
     let routineBlocks = [];
