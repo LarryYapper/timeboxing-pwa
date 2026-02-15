@@ -1,12 +1,12 @@
 /**
  * app.js - Main application logic
- * Version: 1.21
+ * Version: 1.22
  */
-console.log('Timeboxing App v1.21 loaded');
+console.log('Timeboxing App v1.22 loaded');
 
 (function () {
     // State
-    const APP_VERSION = 'v1.21';
+    const APP_VERSION = 'v1.22';
     let currentDate = new Date();
     let blocks = []; // Combined routines + local + calendar blocks
     let routineBlocks = [];
@@ -89,8 +89,24 @@ console.log('Timeboxing App v1.21 loaded');
         // Reload App Listener - Hard Reset
         if (elements.reloadAppBtn) {
             elements.reloadAppBtn.addEventListener('click', async () => {
-                if (confirm('Restartovat a načíst novou verzi? (To provede tvrdý reset aplikace)')) {
-                    // 1. Unregister Service Worker
+                const btn = elements.reloadAppBtn;
+                btn.disabled = true;
+                const originalIcon = btn.innerHTML;
+                btn.innerHTML = '...'; // Spinner/Wait
+
+                try {
+                    // console.log('Hyper Reload: Starting...');
+                    // alert('Aktualizace...'); // Feedback for e-reader
+
+                    // 1. Send SKIP_WAITING to any waiting worker
+                    if ('serviceWorker' in navigator) {
+                        const reg = await navigator.serviceWorker.getRegistration();
+                        if (reg && reg.waiting) {
+                            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                        }
+                    }
+
+                    // 2. Unregister ALL Service Workers
                     if ('serviceWorker' in navigator) {
                         const registrations = await navigator.serviceWorker.getRegistrations();
                         for (const registration of registrations) {
@@ -98,14 +114,19 @@ console.log('Timeboxing App v1.21 loaded');
                         }
                     }
 
-                    // 2. Clear Caches
+                    // 3. Clear ALL Caches
                     if ('caches' in window) {
                         const keys = await caches.keys();
                         await Promise.all(keys.map(key => caches.delete(key)));
                     }
 
-                    // 3. Reload from server
-                    window.location.reload(true);
+                    // 4. Force Reload with Search Param to bust browser cache
+                    // alert('Hotovo. Restartuji...');
+                    window.location.href = 'index.html?v=' + new Date().getTime();
+
+                } catch (err) {
+                    alert('Chyba aktualizace: ' + err.message);
+                    window.location.reload();
                 }
             });
         }
