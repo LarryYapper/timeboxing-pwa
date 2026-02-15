@@ -479,18 +479,17 @@ body {
 
 /* 23rd Hour - Short Row */
 .timegrid-row.short-row {
-    height: 30px !important;
-    /* Force shorter height */
+    flex: 1;
+    /* Also flex */
     background: repeating-linear-gradient(45deg,
             var(--color-bg-secondary),
             var(--color-bg-secondary) 10px,
             var(--color-bg-tertiary) 10px,
             var(--color-bg-tertiary) 20px);
-    /* Stripe pattern to indicate sleep/inactive */
 }
 
 .timegrid-row.short-row .time-slot {
-    height: 30px !important;
+    height: 100%;
 }
 
 .timegrid-row.short-row .time-label {
@@ -515,33 +514,39 @@ body {
 
 .timegrid-container {
     flex: 1;
-    overflow-y: auto;
-    overflow-x: auto;
-    padding-bottom: 80px;
-    /* Space for FABs */
+    overflow: hidden;
+    /* Disable scroll here too */
+    padding-bottom: 0;
     background: var(--color-surface);
     border-radius: var(--radius-lg);
     border: 2px solid var(--color-border);
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .timegrid {
     display: flex;
     flex-direction: column;
     width: 100%;
-    min-width: 500px;
-    padding-bottom: 60px;
+    height: 100%;
+    /* Fill container */
+    min-width: 0;
+    /* Allow shrinking */
+    padding-bottom: 0;
 }
 
 /* Header row with time markers */
 .timegrid-header {
     display: flex;
     background: var(--color-bg-tertiary);
-    position: sticky;
-    top: 0;
+    /* Remove sticky, just simple block at top */
     z-index: 10;
+    flex-shrink: 0;
+    /* Keep header size */
 }
 
+/* ... header cells ... */
 .timegrid-header-cell {
     flex: 1;
     min-width: 0;
@@ -569,9 +574,16 @@ body {
 
 .timegrid-row {
     display: flex;
-    height: var(--grid-hour-height);
+    /* height: var(--grid-hour-height); -- REMOVED */
+    flex: 1;
+    /* Grow to fill space */
+    min-height: 0;
+    /* Allow getting very small */
+    border-bottom: 1px solid var(--color-border);
+    /* Explicit border for separation */
 }
 
+/* ... nth child colors ... */
 .timegrid-row:nth-child(even) {
     background: var(--color-bg-tertiary);
 }
@@ -586,18 +598,16 @@ body {
     min-width: var(--grid-time-width);
     flex-shrink: 0;
     padding: 0 var(--spacing-sm);
-    /* Removed top/bottom padding for flex centering */
     padding-right: var(--spacing-md);
     font-size: var(--font-size-sm);
     font-weight: 600;
     color: var(--color-text);
-    /* Flexbox for vertical centering */
     display: flex;
     align-items: center;
     justify-content: flex-end;
 
     border-right: 2px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
+    /* border-bottom: 1px solid var(--color-border); -- Managed by row now */
     background: var(--color-bg-secondary);
     box-sizing: border-box;
 }
@@ -606,16 +616,15 @@ body {
 .time-slot {
     flex: 1;
     min-width: 0;
-    height: var(--grid-hour-height);
+    height: 100%;
+    /* Fill the flex row */
     border-right: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
+    /* border-bottom: 1px solid var(--color-border); -- Managed by row */
     position: relative;
     overflow: visible;
     box-sizing: border-box;
-    /* Full white background for empty slots as requested */
     background-color: #ffffff;
     cursor: pointer;
-    /* Critical for E-reader tap events */
 }
 
 .time-slot:last-child {
