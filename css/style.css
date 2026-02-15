@@ -1311,9 +1311,9 @@ body {
     line-height: 1;
 }
 
-/* Remove huge bottom block */
+/* Remove huge bottom block - REMOVED */
 .timegrid-container {
-    padding-bottom: 20px;
+    padding-bottom: 0 !important;
 }
 
 /* Ensure Google Button matches */
