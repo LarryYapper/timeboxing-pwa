@@ -1,8 +1,8 @@
 /**
  * app.js - Main application logic
- * Version: 1.04
+ * Version: 1.05
  */
-console.log('Timeboxing App v1.04 loaded');
+console.log('Timeboxing App v1.05 loaded');
 // alert('App Updated to v86'); 
 
 (function () {
@@ -145,8 +145,6 @@ console.log('Timeboxing App v1.04 loaded');
         }
 
 
-        const grid = elements.timegrid;
-        grid.innerHTML = '';
 
         // Create header row with time markers
         const header = document.createElement('div');
