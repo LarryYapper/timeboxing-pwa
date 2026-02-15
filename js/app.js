@@ -1,8 +1,8 @@
 /**
  * app.js - Main application logic
- * Version: 0.87
+ * Version: 0.88
  */
-console.log('Timeboxing App v0.87 loaded');
+console.log('Timeboxing App v0.88 loaded');
 // alert('App Updated to v86'); 
 
 (function () {
@@ -187,7 +187,7 @@ console.log('Timeboxing App v0.87 loaded');
         // Date navigation
         elements.prevDay.addEventListener('click', () => changeDate(-1));
         elements.nextDay.addEventListener('click', () => changeDate(1));
-        elements.todayBtn.addEventListener('click', goToToday);
+        // elements.todayBtn.addEventListener('click', goToToday); // Removed
 
         // Google sign in
         elements.googleSigninBtn.addEventListener('click', handleGoogleSignIn);
