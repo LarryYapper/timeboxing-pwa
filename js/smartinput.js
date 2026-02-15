@@ -36,11 +36,9 @@ const SmartInput = (function () {
         naTime: /na\s*(\d+(?:[.,]\d+)?)\s*(hodin[uya]?|h|minut[uya]?|min|m)/i,
         // "1 hodinu", "30 minut", "1.5h"
         simpleTime: /(\d+(?:[.,]\d+)?)\s*(hodin[uya]?|h|minut[uya]?|min|m)\b/i,
-        // "45m", "1h"
-        shorthand: /(\d+(?:[.,]\d+)?)(h|m)\b/i,
-        // "Task 15", "Task 30" (Implicit minutes at end of string - restricted to common durations)
-        // Matches whitespace + (15|30|45|60|90) + end of string
-        implicitMinutes: /\s+(15|30|45|60|90)\s*$/
+        // "Task 15", "Task 30" (Implicit minutes at end of string)
+        // Matches whitespace + number + end of string
+        implicitMinutes: /\s+(\d+)\s*$/
     };
 
     /**

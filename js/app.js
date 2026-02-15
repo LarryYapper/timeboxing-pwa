@@ -1,12 +1,12 @@
 /**
  * app.js - Main application logic
- * Version: 1.42
+ * Version: 1.43
  */
-console.log('Timeboxing App v1.42 loaded');
+console.log('Timeboxing App v1.43 loaded');
 
 (function () {
     // State
-    const APP_VERSION = 'v1.42';
+    const APP_VERSION = 'v1.43';
     let currentDate = new Date();
     let blocks = []; // Combined routines + local + calendar blocks
     let routineBlocks = [];
@@ -1158,7 +1158,13 @@ console.log('Timeboxing App v1.42 loaded');
         if (!slot) return;
 
         // Ignore if it has a block (handled by block click)
-        if (slot.classList.contains('has-block') || slot.querySelector('.time-block-fill')) return;
+        if (slot.classList.contains('has-block') || slot.querySelector('.time-block-fill')) {
+            // Check if we actually clicked the FILL element (block) vs just the slot background
+            // If we clicked the slot background (e.g. padding?), we might want to create? 
+            // But usually fill covers most. 
+            // Let's assume if it has a block, we don't create new.
+            return;
+        }
 
         // Get time from row and slot index
         const row = slot.closest('.time-grid-row');
