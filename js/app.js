@@ -1,12 +1,12 @@
 /**
  * app.js - Main application logic
- * Version: 1.26
+ * Version: 1.27
  */
-console.log('Timeboxing App v1.26 loaded');
+console.log('Timeboxing App v1.27 loaded');
 
 (function () {
     // State
-    const APP_VERSION = 'v1.26';
+    const APP_VERSION = 'v1.27';
     let currentDate = new Date();
     let blocks = []; // Combined routines + local + calendar blocks
     let routineBlocks = [];
@@ -595,27 +595,68 @@ console.log('Timeboxing App v1.26 loaded');
         const btn = elements.quickSyncBtn;
         const originalContent = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<span class="icon">↻</span>'; // Spinner-ish
+        btn.innerHTML = '<span class="icon">⇄</span>'; // Two-way arrow
         showSyncStatus('Syncing...', 'normal');
 
         try {
-            // 1. Load data from Drive
-            const data = await Calendar.loadData();
-            if (!data) {
-                showSyncStatus('No Data Found', 'warning');
-                return;
+            // 1. Load data from Drive (Remote)
+            const remoteData = await Calendar.loadData();
+
+            // 2. Load data from Local
+            const localData = await Storage.exportBackup();
+
+            // 3. Merge Strategies
+            // Rule: Union of IDs. If ID exists in both, prefer LOCAL (assuming user is active here).
+            // This prevents overwriting local work with old remote data, 
+            // BUT it also brings in missing remote items (from other device).
+            // Trade-off: Deletions on other device might "re-appear" if they still exist locally.
+
+            let mergedBlocks = [];
+            let mergedSettings = [];
+            let mergedHidden = {};
+
+            if (!remoteData) {
+                // Nothing on Drive? Just push Local.
+                mergedBlocks = localData.blocks;
+                mergedSettings = localData.settings;
+                mergedHidden = localData.hiddenRoutines;
+            } else {
+                // Blocks Merge
+                const blockMap = new Map();
+                // Add Remote first
+                if (remoteData.blocks) remoteData.blocks.forEach(b => blockMap.set(b.id, b));
+                // Overlay Local (Local Wins on conflict)
+                if (localData.blocks) localData.blocks.forEach(b => blockMap.set(b.id, b));
+                mergedBlocks = Array.from(blockMap.values());
+
+                // Settings Merge (Local Wins)
+                const settingMap = new Map();
+                if (remoteData.settings) remoteData.settings.forEach(s => settingMap.set(s.key, s));
+                if (localData.settings) localData.settings.forEach(s => settingMap.set(s.key, s));
+                mergedSettings = Array.from(settingMap.values());
+
+                // Hidden Routines Merge
+                mergedHidden = { ...remoteData.hiddenRoutines, ...localData.hiddenRoutines };
             }
 
-            // 2. Import into Storage
-            await Storage.importBackup(data, true); // true = overwrite local
+            const mergedData = {
+                blocks: mergedBlocks,
+                settings: mergedSettings,
+                hiddenRoutines: mergedHidden,
+                timestamp: Date.now()
+            };
 
-            // 3. Reload UI
+            // 4. Push MERGED data back to Drive (so other device gets my changes + I keep theirs)
+            await Calendar.saveData(mergedData);
+
+            // 5. Update Local Storage with MERGED data
+            await Storage.importBackup(mergedData, true); // Overwrite local with the Union
+
+            // 6. Reload UI
             await loadDate(currentDate);
-
-            // 4. Update Time Indicator
             updateCurrentTimeIndicator();
 
-            showSyncStatus('Synced!', 'success');
+            showSyncStatus('Synced (Merged)', 'success');
         } catch (e) {
             console.error('Sync failed', e);
             showSyncStatus('Sync Failed', 'error');
