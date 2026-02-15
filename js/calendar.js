@@ -293,7 +293,8 @@ const Calendar = (function () {
             const calendarListResponse = await gapi.client.calendar.calendarList.list({
                 minAccessRole: 'reader'
             });
-            const calendars = calendarListResponse.result.items || [];
+            const calendars = (calendarListResponse.result.items || [])
+                .filter(cal => cal.summary !== '🏥 Anet – Nemocnice');
 
             // 2. Fetch events for each calendar in parallel
             const eventPromises = calendars.map(async (calendar) => {
@@ -324,9 +325,9 @@ const Calendar = (function () {
             const allEvents = results.flat();
 
             // 3. Convert to our block format
+            // 3. Convert to our block format
             const timedEvents = allEvents
                 .filter(event => event.start && event.start.dateTime)
-                .filter(event => (event.summary || '') !== 'Anet - nemocnice') // Filter specific event
                 .map(event => ({
                     id: `gcal_${event.id}`,
                     title: event.summary || 'Bez názvu',
