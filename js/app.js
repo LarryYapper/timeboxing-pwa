@@ -1151,6 +1151,10 @@ console.log('Timeboxing App v1.08 loaded');
         indicator.className = 'current-time-indicator';
         indicator.style.left = `${leftPosition}px`;
 
+        // Format time for badge (e.g. "14:25")
+        const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        indicator.setAttribute('data-time', timeString);
+
         // Append to the row's slot area (after the time label)
         currentRow.style.position = 'relative';
         currentRow.appendChild(indicator);
