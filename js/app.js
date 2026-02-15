@@ -1,12 +1,12 @@
 /**
  * app.js - Main application logic
- * Version: 1.54
+ * Version: 1.55
  */
-console.log('Timeboxing App v1.54 loaded');
+console.log('Timeboxing App v1.55 loaded');
 
 (function () {
     // State
-    const APP_VERSION = 'v1.54';
+    const APP_VERSION = 'v1.55';
     let currentDate = new Date();
     let blocks = []; // Combined routines + local + calendar blocks
     let routineBlocks = [];
@@ -412,6 +412,48 @@ console.log('Timeboxing App v1.54 loaded');
                 syncFromDrive();
             }
         }, 5 * 60 * 1000);
+
+        // Force Grid Layout Calculation (The "Hammer" Fix)
+        window.addEventListener('resize', adjustGridHeight);
+        // Run slightly after load to ensure DOM is ready
+        setTimeout(adjustGridHeight, 100);
+        setTimeout(adjustGridHeight, 500);
+        setTimeout(adjustGridHeight, 1000);
+    }
+
+    /**
+     * Manually calculate and set row heights to fit screen exactly
+     */
+    function adjustGridHeight() {
+        const header = document.querySelector('header');
+        const inputContainer = document.querySelector('.smart-input-container'); // Might be hidden
+        const gridHeader = document.querySelector('.timegrid-header');
+        const appContainer = document.querySelector('.app-container');
+
+        if (!header || !gridHeader || !appContainer) return;
+
+        // Get available height
+        // We use window.innerHeight to be sure, minus padding
+        const totalHeight = window.innerHeight;
+
+        // Measure fixed elements
+        const headerHeight = header.offsetHeight;
+        const gridHeaderHeight = gridHeader.offsetHeight;
+
+        // Calculate style padding
+        const style = window.getComputedStyle(appContainer);
+        const paddingVertical = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+
+        // Available space for 17 rows
+        const availableSpace = totalHeight - headerHeight - gridHeaderHeight - paddingVertical - 2; // -2 for safety/borders
+
+        // Calculate exact pixel height per row
+        const rowHeight = availableSpace / 17;
+
+        // Apply to CSS variable
+        document.documentElement.style.setProperty('--js-row-height', `${rowHeight}px`);
+
+        console.log(`Grid Height Adjusted: Total=${totalHeight}, Avail=${availableSpace}, Row=${rowHeight}`);
     }
 
     // Sync state
