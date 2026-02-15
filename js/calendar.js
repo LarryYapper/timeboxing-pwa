@@ -326,6 +326,7 @@ const Calendar = (function () {
             // 3. Convert to our block format
             const timedEvents = allEvents
                 .filter(event => event.start && event.start.dateTime)
+                .filter(event => (event.summary || '') !== 'Anet - nemocnice') // Filter specific event
                 .map(event => ({
                     id: `gcal_${event.id}`,
                     title: event.summary || 'Bez názvu',
