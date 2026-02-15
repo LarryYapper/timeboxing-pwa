@@ -575,34 +575,39 @@ const TimeBlocks = (function () {
     };
 
     /**
-     * Render all-day events into their dedicated container
+     * Render all-day events into their dedicated popover list
      */
     function renderAllDay(events) {
-        const container = document.getElementById('allday-events');
-        if (!container) return;
+        const list = document.getElementById('all-day-list');
+        const btn = document.getElementById('all-day-btn');
+        const count = document.getElementById('all-day-count');
 
-        container.innerHTML = '';
+        if (!list || !btn) return;
 
+        list.innerHTML = '';
+
+        // Hide btn if no events
         if (!events || events.length === 0) {
-            container.hidden = true;
+            btn.style.display = 'none';
+            if (count) count.textContent = '0';
             return;
         }
 
-        container.hidden = false;
+        // Show btn
+        btn.style.display = 'inline-flex';
+        // Force flex to ensure it shows up (since style.display = 'none' was set in HTML)
+        if (count) count.textContent = events.length.toString();
 
         events.forEach(event => {
-            const chip = document.createElement('div');
-            chip.className = 'allday-chip';
-            chip.textContent = event.title;
+            const item = document.createElement('div');
+            item.className = 'allday-item';
+            item.textContent = event.title;
 
-            // Style
-            const bgColor = event.backgroundColor || '#588AEE'; // Default calendar blue
-            chip.style.backgroundColor = bgColor;
-            // Most calendar colors are dark-ish, so white text is usually safe. 
-            // We could use getTextColorForCategory but these aren't categories.
-            chip.style.color = '#fff';
+            // Optional: Colored border or dot
+            const color = event.backgroundColor || '#588AEE';
+            item.style.borderLeft = `4px solid ${color}`;
 
-            container.appendChild(chip);
+            list.appendChild(item);
         });
     }
 })();

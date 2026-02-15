@@ -87,7 +87,7 @@
         }
     </style>
 
-    <link rel="stylesheet" href="css/style.v2.css?v=1.56">
+    <link rel="stylesheet" href="css/style.v4.css?v=1.65">
 </head>
 
 <body>
@@ -290,19 +290,19 @@
     </div>
 
     <!-- Scripts - Updated to latest versions -->
-    <script src="js/storage.js?v=1.63"></script>
-    <script src="js/routines.js?v=1.63"></script>
-    <script src="js/smartinput.js?v=1.63"></script>
-    <script src="js/timeblocks.js?v=1.63"></script>
-    <script src="js/calendar.js?v=1.63"></script>
-    <script src="js/app.js?v=1.63"></script>
+    <script src="js/storage.js?v=1.65"></script>
+    <script src="js/routines.js?v=1.65"></script>
+    <script src="js/smartinput.js?v=1.65"></script>
+    <script src="js/timeblocks.js?v=1.65"></script>
+    <script src="js/calendar.js?v=1.65"></script>
+    <script src="js/app.js?v=1.65"></script>
 
     <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 // ADDING TIMESTAMP TO FORCE UPDATE
-                navigator.serviceWorker.register('sw.js?v=1.63' + new Date().getTime())
+                navigator.serviceWorker.register('sw.js?v=1.63')
                     .then(reg => {
                         console.log('SW registered');
                         // FORCE UPDATE FOUND
