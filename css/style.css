@@ -373,7 +373,8 @@ body {
 
 .smart-input-container {
     position: fixed;
-    bottom: 20px;
+    top: 80px !important;
+    bottom: auto !important;
     left: 50%;
     transform: translateX(-50%);
     width: 95%;
