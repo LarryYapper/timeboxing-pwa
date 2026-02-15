@@ -53,8 +53,6 @@
             width: 100% !important;
             overflow: hidden !important;
             box-sizing: border-box !important;
-            /* DEBUG BORDER - If you see this red line, the update worked */
-            border: 1px solid red;
         }
 
         .timegrid-container {
@@ -292,7 +290,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=1.62')
+                navigator.serviceWorker.register('sw.js?v=1.63')
                     .then(reg => console.log('SW registered'))
                     .catch(err => console.log('SW registration failed:', err));
             });
