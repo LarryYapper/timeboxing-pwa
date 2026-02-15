@@ -189,6 +189,11 @@ window.onerror = function (msg, url, line, col, error) {
     async function init() {
         console.log(`Initializing Timeboxing App ${APP_VERSION}...`);
 
+        // 0. VISUALS FIRST (Theme & Grid)
+        initTheme();
+        buildTimeGrid();
+        TimeBlocks.init(elements.timegrid);
+
         // 1. CRITICAL: Set up Event Listeners FIRST so buttons work immediately
         try {
             setupEventListeners();
@@ -201,25 +206,16 @@ window.onerror = function (msg, url, line, col, error) {
         // 2. CRITICAL: Show Date immediately
         try {
             updateDateDisplay();
-            // Also update time indicator immediately
+            // Also update time indicator immediately (Now safe as grid exists)
             updateCurrentTimeIndicator();
         } catch (e) {
             console.error('Failed to update date display:', e);
         }
 
-
-
         // Inject version into UI
         document.title = `Timeboxing ${APP_VERSION}`;
         const logo = document.querySelector('.logo');
         if (logo) logo.textContent = `Timeboxing ${APP_VERSION}`;
-
-        // Initialize Theme (Default to Dark)
-        initTheme();
-
-        // Build the time grid (Visuals)
-        buildTimeGrid();
-        TimeBlocks.init(elements.timegrid);
 
 
         // 3. DATA LOADING (Risky parts)
