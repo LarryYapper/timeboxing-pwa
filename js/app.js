@@ -1,12 +1,12 @@
 /**
  * app.js - Main application logic
- * Version: 1.27
+ * Version: 1.28
  */
-console.log('Timeboxing App v1.27 loaded');
+console.log('Timeboxing App v1.28 loaded');
 
 (function () {
     // State
-    const APP_VERSION = 'v1.27';
+    const APP_VERSION = 'v1.28';
     let currentDate = new Date();
     let blocks = []; // Combined routines + local + calendar blocks
     let routineBlocks = [];
@@ -90,6 +90,11 @@ console.log('Timeboxing App v1.27 loaded');
         // Quick Sync Listener
         if (elements.quickSyncBtn) {
             elements.quickSyncBtn.addEventListener('click', syncFromDrive);
+        }
+
+        // Grid Click Listener (Empty Slot -> Add Block)
+        if (elements.timegrid) {
+            elements.timegrid.addEventListener('click', handleGridClick);
         }
 
         // Reload App Listener - Hard Reset
@@ -1079,6 +1084,50 @@ console.log('Timeboxing App v1.27 loaded');
         if (block) {
             openModal(block);
         }
+    }
+
+    /**
+     * Handle click on empty time slot -> Open Add Modal
+     */
+    function handleGridClick(e) {
+        // Find the closest time-slot
+        const slot = e.target.closest('.time-slot');
+        if (!slot) return;
+
+        // Ignore if it has a block (handled by block click)
+        if (slot.classList.contains('has-block') || slot.querySelector('.time-block-fill')) return;
+
+        // Get time from row and slot index
+        const row = slot.closest('.time-grid-row');
+        if (!row) return;
+
+        const hour = parseInt(row.dataset.hour);
+        const allSlots = Array.from(row.querySelectorAll('.time-slot'));
+        const slotIndex = allSlots.indexOf(slot);
+
+        if (isNaN(hour) || slotIndex === -1) return;
+
+        // Calculate Start Time (HH:mm)
+        const minutes = slotIndex * 15;
+        const startString = `${String(hour).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+        // Calculate End Time (Start + 15m)
+        const endData = new Date();
+        endData.setHours(hour, minutes + 15, 0, 0);
+        const endString = `${String(endData.getHours()).padStart(2, '0')}:${String(endData.getMinutes()).padStart(2, '0')}`;
+
+        // Create dummy block for Modal
+        const newBlock = {
+            id: null, // New block
+            title: '',
+            startTime: startString,
+            endTime: endString,
+            category: 'work', // Default
+            notes: '',
+            fromCalendar: false
+        };
+
+        openModal(newBlock);
     }
 
     /**
