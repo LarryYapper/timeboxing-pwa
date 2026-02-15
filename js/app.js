@@ -1,12 +1,12 @@
 /**
  * app.js - Main application logic
- * Version: 1.36
+ * Version: 1.37
  */
-console.log('Timeboxing App v1.36 loaded');
+console.log('Timeboxing App v1.37 loaded');
 
 (function () {
     // State
-    const APP_VERSION = 'v1.36';
+    const APP_VERSION = 'v1.37';
     let currentDate = new Date();
     let blocks = []; // Combined routines + local + calendar blocks
     let routineBlocks = [];
@@ -91,6 +91,49 @@ console.log('Timeboxing App v1.36 loaded');
         if (elements.quickSyncBtn) {
             elements.quickSyncBtn.addEventListener('click', syncFromDrive);
         }
+
+        // Initialize Smart Input Toggle
+        // document.addEventListener('keydown', (e) => {
+        //     // Shortcut: 'Q' to open smart input
+        //     if (e.key.toLowerCase() === 'q' && !e.ctrlKey && !e.metaKey && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+        //         e.preventDefault();
+        //         toggleSmartInput();
+        //     }
+        //     // Shortcut: 'Esc' to close input or modal
+        //     if (e.key === 'Escape') {
+        //         // If modal is open, close it
+        //         if (!elements.blockModal.hidden) {
+        //             closeModal();
+        //         } else {
+        //             // Else close smart input
+        //             elements.smartInputContainer.style.display = 'none';
+        //         }
+        //     }
+        // });
+
+        // Re-implementing with cleaner logic
+        document.addEventListener('keydown', (e) => {
+            // Q: Open Smart Input (if not typing)
+            if (e.key.toLowerCase() === 'q' &&
+                !e.ctrlKey && !e.metaKey && !e.altKey &&
+                e.target.tagName !== 'INPUT' &&
+                e.target.tagName !== 'TEXTAREA' &&
+                !e.target.isContentEditable) {
+
+                e.preventDefault();
+                elements.smartInputContainer.style.display = 'block';
+                elements.smartInput.focus();
+            }
+
+            // ESC: Close everything
+            if (e.key === 'Escape') {
+                if (!elements.blockModal.hidden) {
+                    closeModal();
+                } else if (elements.smartInputContainer.style.display !== 'none') {
+                    elements.smartInputContainer.style.display = 'none';
+                }
+            }
+        });
 
         // Grid Click Listener (Empty Slot -> Add Block)
         if (elements.timegrid) {
