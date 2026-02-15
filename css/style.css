@@ -605,7 +605,7 @@ body {
 }
 
 /* Block content inside cell - REFACTORED for seamless spanning */
-.time-block-content {
+.time-block-fill {
     position: absolute;
     top: 0;
     left: 0;
@@ -628,13 +628,13 @@ body {
 }
 
 /* Routine specific styling */
-.time-block-content.is-routine .block-title {
+.time-block-fill.is-routine .block-title {
     font-family: var(--font-family-serif);
     font-style: italic;
     font-weight: 600;
 }
 
-.time-block-content:hover {
+.time-block-fill:hover {
     opacity: 0.95;
     transform: scale(1.02);
     z-index: 20;
