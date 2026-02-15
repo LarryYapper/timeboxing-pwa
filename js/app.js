@@ -1,8 +1,8 @@
 /**
  * app.js - Main application logic
- * Version: 0.91
+ * Version: 0.92
  */
-console.log('Timeboxing App v0.91 loaded');
+console.log('Timeboxing App v0.92 loaded');
 // alert('App Updated to v86'); 
 
 (function () {
@@ -79,10 +79,25 @@ console.log('Timeboxing App v0.91 loaded');
         updateCurrentTimeIndicator();
         setInterval(updateCurrentTimeIndicator, 60000); // Update every minute
 
-        // Reload App Listener
+        // Reload App Listener - Hard Reset
         if (elements.reloadAppBtn) {
-            elements.reloadAppBtn.addEventListener('click', () => {
-                if (confirm('Restartovat a načíst novou verzi?')) {
+            elements.reloadAppBtn.addEventListener('click', async () => {
+                if (confirm('Restartovat a načíst novou verzi? (To provede tvrdý reset aplikace)')) {
+                    // 1. Unregister Service Worker
+                    if ('serviceWorker' in navigator) {
+                        const registrations = await navigator.serviceWorker.getRegistrations();
+                        for (const registration of registrations) {
+                            await registration.unregister();
+                        }
+                    }
+
+                    // 2. Clear Caches
+                    if ('caches' in window) {
+                        const keys = await caches.keys();
+                        await Promise.all(keys.map(key => caches.delete(key)));
+                    }
+
+                    // 3. Reload from server
                     window.location.reload(true);
                 }
             });
