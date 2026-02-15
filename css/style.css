@@ -195,11 +195,16 @@ body {
     line-height: 1.5;
     color: var(--color-text);
     background: var(--color-bg);
-    min-height: 100vh;
-    min-height: 100dvh;
-    overflow-x: hidden;
+    height: 100vh;
+    height: 100dvh;
+    /* Dynamic viewport height */
+    overflow: hidden;
+    /* Disable global scrolling */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    position: fixed;
+    /* Lock body in place */
+    width: 100%;
 }
 
 /* ====================================
@@ -212,8 +217,10 @@ body {
     padding: var(--spacing-md);
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100%;
+    /* Full height */
+    overflow: hidden;
+    /* No internal scroll */
 }
 
 /* ====================================
