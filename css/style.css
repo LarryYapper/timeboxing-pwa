@@ -650,8 +650,18 @@ body {
     font-size: var(--font-size-sm);
     font-weight: 700;
     white-space: nowrap;
-    overflow: visible;
+    overflow: hidden;
+    text-overflow: ellipsis;
     margin-right: var(--spacing-xs);
+
+    /* Black Box Style */
+    background-color: black;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .block-notes {
