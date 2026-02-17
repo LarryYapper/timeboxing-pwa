@@ -272,6 +272,9 @@ const TimeBlocks = (function () {
                 // Click handler
                 fill.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    if (fill.hasAttribute('data-has-dragged')) {
+                        return; // Ignore click after drag
+                    }
                     handleBlockClick(block.id);
                 });
 
@@ -392,12 +395,21 @@ const TimeBlocks = (function () {
 
         // Dynamic delay: Short for Mouse (PC), Long for Touch (E-reader compatibility)
         const isTouch = e.pointerType === 'touch' || e.pointerType === 'pen';
-        const HOLD_DELAY = isTouch ? 400 : 150;
+        const HOLD_DELAY = isTouch ? 400 : 0; // Immediate for mouse
 
-        // Cancel hold if pointer moves too much before activation
+        // ... handlers ...
+
         const onMoveBeforeHold = (moveEvent) => {
             const dx = moveEvent.clientX - startX;
             const dy = moveEvent.clientY - startY;
+
+            // For mouse, we WANT movement to trigger drag, not cancel hold
+            if (!isTouch) {
+                // Do nothing, let holdTimer (0ms) or direct call handle it
+                // Actually if delay is 0, timer fires immediately.
+                return;
+            }
+
             if (Math.abs(dx) + Math.abs(dy) > 8) {
                 cancelHold();
             }
@@ -413,24 +425,32 @@ const TimeBlocks = (function () {
             document.removeEventListener('pointerup', onUpBeforeHold);
         };
 
-        // After hold delay, activate drag mode
-        const holdTimer = setTimeout(() => {
+        // Activate logic
+        const startDragMode = () => {
             holdActivated = true;
             document.removeEventListener('pointermove', onMoveBeforeHold);
             document.removeEventListener('pointerup', onUpBeforeHold);
 
-            // Visual feedback that drag is active
-            el.style.opacity = '0.6';
-
-            // Vibration feedback for touch devices
-            if (navigator.vibrate) navigator.vibrate(50);
+            // Only add visual opacity for touch holds? For mouse it's instant.
+            if (isTouch) {
+                el.style.opacity = '0.6';
+                if (navigator.vibrate) navigator.vibrate(50);
+            }
 
             document.addEventListener('pointermove', onDragMove);
             document.addEventListener('pointerup', onDragUp);
-        }, HOLD_DELAY);
+        };
 
-        document.addEventListener('pointermove', onMoveBeforeHold);
-        document.addEventListener('pointerup', onUpBeforeHold);
+        let holdTimer;
+
+        if (isTouch) {
+            holdTimer = setTimeout(startDragMode, HOLD_DELAY);
+            document.addEventListener('pointermove', onMoveBeforeHold);
+            document.addEventListener('pointerup', onUpBeforeHold);
+        } else {
+            // MOUSE: Start immediately
+            startDragMode();
+        }
 
         const onDragMove = (moveEvent) => {
             // ... (rest of function logic)
@@ -475,6 +495,11 @@ const TimeBlocks = (function () {
             el.style.opacity = '';
 
             if (hasMoved && dragState) {
+                // ... drop logic ...
+                // Set flag to prevent click
+                el.setAttribute('data-has-dragged', 'true');
+                setTimeout(() => el.removeAttribute('data-has-dragged'), 100);
+
                 const targetSlot = getSlotAtPosition(upEvent.clientX, upEvent.clientY);
                 if (targetSlot) {
                     const newTime = targetSlot.dataset.time;
