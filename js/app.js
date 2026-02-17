@@ -31,7 +31,7 @@ window.onerror = function (msg, url, line, col, error) {
 
 (function () {
     // State
-    const APP_VERSION = 'v1.74';
+    const APP_VERSION = 'v1.75';
 
     // IMMEDIATE LAYOUT FORCE
     function forceImmediateLayout() {
@@ -1830,32 +1830,42 @@ window.onerror = function (msg, url, line, col, error) {
         if (currentLabel) currentLabel.classList.add('current-hour-label');
 
         // Calculate position within the row
-        const slotIndex = Math.floor(minutes / 15); // 0-3
-        const minutesInSlot = minutes % 15;
-        const percentInSlot = minutesInSlot / 15;
+        // NEW LOGIC: Percentage based on total available width for slots
+        // The row contains a label (fixed width) and 4 slots.
+        // We want the indicator to be positioned relative to the *slots area*.
+        // But `currentRow` includes the label.
+        // Let's position relative to the First Slot, but use percentage of the total slot width.
+        // Total slots width = Row Width - Label Width.
+        // Or simpler: The indicator should be a child of the Row, but we calculate `left` as:
+        // LabelWidth + (Minutes/60 * (RowWidth - LabelWidth))
 
-        // CRITICAL FIX: Use offsetLeft for precise positioning relative to the row
-        // This avoids accumulation errors from manual width summation and handles padding/label width automatically.
+        // Even simpler:
+        // Position it relative to the row.
+        // Left = LabelWidth + (Minutes/60 * (TotalWidth - LabelWidth))
 
-        const currentSlot = slotCells[slotIndex];
-        if (!currentSlot) return;
+        // CONSTANT Label Width: 50px (defined in CSS).
+        // Let's verify if label width changes.
+        const label = currentRow.querySelector('.time-label');
+        const labelWidth = label ? label.offsetWidth : 50;
 
-        // Use getBoundingClientRect for sub-pixel precision on width
-        const rect = currentSlot.getBoundingClientRect();
-        const preciseWidth = rect.width;
+        // Available width for time slots
+        const totalWidth = currentRow.offsetWidth;
+        const slotsWidth = totalWidth - labelWidth;
 
-        // Calculate left position relative to the row
-        // offsetLeft gives the distance from the left edge of the closest positioned ancestor (the row, since we set it to relative below)
-        // BUT we strictly set row to relative later. We must ensure it IS relative now or offsetParent might be body.
-        currentRow.style.position = 'relative';
+        // Percent of the hour passed
+        const percentOfHour = minutes / 60;
 
-        const leftPosition = currentSlot.offsetLeft + (percentInSlot * preciseWidth);
-
-        // Debug
-        // console.log(`DEBUG: Slot ${slotIndex}, Offset: ${currentSlot.offsetLeft}, Width: ${preciseWidth}, Left: ${leftPosition}`);
+        const leftPosition = labelWidth + (slotsWidth * percentOfHour);
 
         const indicator = document.createElement('div');
         indicator.className = 'current-time-indicator';
+
+        // Use percentage if possible for responsiveness?
+        // left = labelWidth (px) + percent (calc)
+        // indicator.style.left = `calc(${labelWidth}px + ${percentOfHour * 100}%)`; 
+        // THIS IS WRONG because 100% is row width.
+        // We want percent of the remaining space.
+        // It's safer to use pixels if we re-run this on resize (which we do).
         indicator.style.left = `${leftPosition}px`;
 
         // Ensure row is relative so absolute positioning works
