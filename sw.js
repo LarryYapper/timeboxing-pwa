@@ -3,17 +3,17 @@
  * Provides offline functionality and caching
  */
 
-const CACHE_NAME = 'timeboxing-v1.88';
+const CACHE_NAME = 'timeboxing-v1.89';
 const STATIC_ASSETS = [
     './',
     './index.html',
-    './css/style.v4.css?v=1.88',
-    './js/app.js?v=1.88',
-    './js/calendar.js?v=1.88',
-    './js/storage.js?v=1.88',
-    './js/routines.js?v=1.88',
-    './js/smartinput.js?v=1.88',
-    './js/timeblocks.js?v=1.88',
+    './css/style.v4.css?v=1.89',
+    './js/app.js?v=1.89',
+    './js/calendar.js?v=1.89',
+    './js/storage.js?v=1.89',
+    './js/routines.js?v=1.89',
+    './js/smartinput.js?v=1.89',
+    './js/timeblocks.js?v=1.89',
     './manifest.json',
     './icons/icon-192.svg',
     './icons/icon-512.svg'
