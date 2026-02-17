@@ -278,6 +278,15 @@ const TimeBlocks = (function () {
                 // Draggable for user tasks and routines (not calendar events)
                 if (!block.fromCalendar) {
                     makeDraggable(fill, block);
+
+                    // Add resize handle to the LAST cell of the block (or if it's a single cell)
+                    if (currentHour === endPos.hour && i === endSlot - 1) {
+                        makeResizable(fill, block);
+                    }
+                    // Also if we break early (endPos.slot == 0) - wait, looping logic handles i < endSlot.
+                    // If block ends at 14:15, startSlot=0, endSlot=1. i=0. i === endSlot-1 (0 === 0) -> TRUE.
+                    // If block ends at 14:30, endSlot=2. i=0, i=1. i==1 -> TRUE.
+                    // Correct.
                 }
 
                 // Double Click handler
@@ -613,6 +622,113 @@ const TimeBlocks = (function () {
         });
     }
 
+
+    // ====================================
+    // RESIZE LOGIC (New)
+    // ====================================
+
+    let resizeState = null;
+
+    function makeResizable(el, block) {
+        const handle = document.createElement('div');
+        handle.className = 'resize-handle';
+        el.appendChild(handle);
+
+        handle.addEventListener('pointerdown', (e) => onResizeStart(e, block, el));
+        // Stop propagation to prevent drag start
+        handle.addEventListener('mousedown', (e) => e.stopPropagation());
+    }
+
+    function onResizeStart(e, block, el) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (e.button !== 0) return;
+
+        const startY = e.clientY;
+        const startHeight = el.offsetHeight;
+        const startEndTime = block.endTime;
+
+        resizeState = {
+            blockId: block.id,
+            block: block,
+            originalEndTime: block.endTime,
+            element: el
+        };
+
+        el.classList.add('resizing');
+        document.body.style.cursor = 'ns-resize';
+
+        const onResizeMove = (moveEvent) => {
+            const dy = moveEvent.clientY - startY;
+            // Snap logic happens here visualization-wise? 
+            // Or we just update the ghost?
+            // Actually, we should probably update the block visually or a ghost.
+            // For simplicity, let's just calculate the new time and dispatch events on UP, 
+            // but show visual feedback.
+
+            // Visual feedback: stretch the element locally?
+            // Only if it's the last segment (which it is, handles only on last typically?)
+            // Wait, we need to handle multi-segment blocks.
+            // If we resize the last segment, it's fine.
+            el.style.height = (startHeight + dy) + 'px';
+            el.style.zIndex = '100';
+        };
+
+        const onResizeUp = (upEvent) => {
+            document.removeEventListener('pointermove', onResizeMove);
+            document.removeEventListener('pointerup', onResizeUp);
+            document.body.style.cursor = '';
+            el.classList.remove('resizing');
+            el.style.height = ''; // Reset, let grid render handle it
+            el.style.zIndex = '';
+
+            // Calculate new End Time based on drop position
+            // Find slot under cursor
+            const targetSlot = getSlotAtPosition(upEvent.clientX, upEvent.clientY);
+
+            if (targetSlot) {
+                // Determine if we snapped to the end of this slot or start?
+                // Usually snapping to the END of the slot (xx:15, xx:30) is intuitive if dragging down.
+                // Let's rely on the slot's time. 
+                // Slot time is the START of the slot (e.g. 14:00).
+                // If we drag to 14:00 slot, and we are resizing DOWN, we probably mean 14:15 end?
+                // Or if we drag upwards...
+
+                // Let's just use the slot's time as the TARGET END SLOT?
+                // No, slot time is start.
+                // If I drag to 14:00 slot, I want it to end at 14:15 (filling that slot).
+
+                const slotTime = targetSlot.dataset.time;
+                if (slotTime) {
+                    const slotIdx = timeToSlotIndex(slotTime);
+                    // End Time should be End of this slot -> slotIdx + 1
+                    // BUT max is total slots.
+
+                    const newEndIdx = slotIdx + 1;
+                    const newEndTime = slotIndexToTime(newEndIdx);
+
+                    // Validate: End > Start
+                    if (newEndTime > block.startTime) {
+                        document.dispatchEvent(new CustomEvent('blockMoved', {
+                            detail: {
+                                blockId: block.id,
+                                startTime: block.startTime,
+                                endTime: newEndTime
+                            }
+                        }));
+                    }
+                }
+            }
+
+            resizeState = null;
+        };
+
+        document.addEventListener('pointermove', onResizeMove);
+        document.addEventListener('pointerup', onResizeUp);
+    }
+
+
     // Public API
     return {
         init,
@@ -625,6 +741,7 @@ const TimeBlocks = (function () {
         GRID_START_HOUR,
         GRID_END_HOUR,
         HOUR_HEIGHT: 60,
-        SLOT_HEIGHT: 15
+        SLOT_HEIGHT: 15,
+        makeResizable // Export for testing if needed, though used internally primarily
     };
 })();
