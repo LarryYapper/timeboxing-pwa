@@ -425,33 +425,7 @@ const TimeBlocks = (function () {
             document.removeEventListener('pointerup', onUpBeforeHold);
         };
 
-        // Activate logic
-        const startDragMode = () => {
-            holdActivated = true;
-            document.removeEventListener('pointermove', onMoveBeforeHold);
-            document.removeEventListener('pointerup', onUpBeforeHold);
-
-            // Only add visual opacity for touch holds? For mouse it's instant.
-            if (isTouch) {
-                el.style.opacity = '0.6';
-                if (navigator.vibrate) navigator.vibrate(50);
-            }
-
-            document.addEventListener('pointermove', onDragMove);
-            document.addEventListener('pointerup', onDragUp);
-        };
-
-        let holdTimer;
-
-        if (isTouch) {
-            holdTimer = setTimeout(startDragMode, HOLD_DELAY);
-            document.addEventListener('pointermove', onMoveBeforeHold);
-            document.addEventListener('pointerup', onUpBeforeHold);
-        } else {
-            // MOUSE: Start immediately
-            startDragMode();
-        }
-
+        // Define handlers FIRST so they are available to startDragMode
         const onDragMove = (moveEvent) => {
             // ... (rest of function logic)
             const dx = moveEvent.clientX - startX;
@@ -529,6 +503,35 @@ const TimeBlocks = (function () {
                 dragState = null;
             }
         };
+
+        // Activate logic
+        const startDragMode = () => {
+            holdActivated = true;
+            document.removeEventListener('pointermove', onMoveBeforeHold);
+            document.removeEventListener('pointerup', onUpBeforeHold);
+
+            // Only add visual opacity for touch holds? For mouse it's instant.
+            if (isTouch) {
+                el.style.opacity = '0.6';
+                if (navigator.vibrate) navigator.vibrate(50);
+            }
+
+            document.addEventListener('pointermove', onDragMove);
+            document.addEventListener('pointerup', onDragUp);
+        };
+
+        let holdTimer;
+
+        if (isTouch) {
+            holdTimer = setTimeout(startDragMode, HOLD_DELAY);
+            document.addEventListener('pointermove', onMoveBeforeHold);
+            document.addEventListener('pointerup', onUpBeforeHold);
+        } else {
+            // MOUSE: Start immediately
+            startDragMode();
+        }
+
+
 
         // Do NOT preventDefault here on pointerdown, it breaks scrolling/click?
         // Actually we need it to stop text selection?
