@@ -31,7 +31,7 @@ window.onerror = function (msg, url, line, col, error) {
 
 (function () {
     // State
-    const APP_VERSION = 'v1.82';
+    const APP_VERSION = 'v1.83';
 
     // IMMEDIATE LAYOUT FORCE
     function forceImmediateLayout() {
@@ -1839,21 +1839,23 @@ window.onerror = function (msg, url, line, col, error) {
         // Define currentSlot (Fix for ReferenceError)
         const currentSlot = slotCells[slotIndex];
 
+        // NEW LOGIC v1.83: Position relative to the *current slot* with sub-minute precision
+        // And CENTER the indicator so the line itself aligns exactly with the time.
+        const now = new Date();
+        const seconds = now.getSeconds();
+        const totalMinutesInSlot = (minutes % 15) + (seconds / 60);
+
         // offsetLeft is relative to the row (flex container)
-        // 14 mins = (14/15) * slotWidth + slotLeft
+        // Calculate exact pixel position
         const slotLeft = currentSlot.offsetLeft;
         const slotWidth = currentSlot.offsetWidth;
-        const leftPosition = slotLeft + (slotWidth * (minutesInSlot / 15));
+        const leftPosition = slotLeft + (slotWidth * (totalMinutesInSlot / 15));
 
         const indicator = document.createElement('div');
         indicator.className = 'current-time-indicator';
 
-        // Use percentage if possible for responsiveness?
-        // left = labelWidth (px) + percent (calc)
-        // indicator.style.left = `calc(${labelWidth}px + ${percentOfHour * 100}%)`; 
-        // THIS IS WRONG because 100% is row width.
-        // We want percent of the remaining space.
-        // It's safer to use pixels if we re-run this on resize (which we do).
+        // Center the 4px line on the exact time
+        indicator.style.transform = 'translateX(-50%)';
         indicator.style.left = `${leftPosition}px`;
 
         // Ensure row is relative so absolute positioning works
