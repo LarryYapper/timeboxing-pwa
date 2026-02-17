@@ -31,7 +31,7 @@ window.onerror = function (msg, url, line, col, error) {
 
 (function () {
     // State
-    const APP_VERSION = 'v1.76';
+    const APP_VERSION = 'v1.77';
 
     // IMMEDIATE LAYOUT FORCE
     function forceImmediateLayout() {
@@ -1856,6 +1856,9 @@ window.onerror = function (msg, url, line, col, error) {
         const percentOfHour = minutes / 60;
 
         const leftPosition = labelWidth + (slotsWidth * percentOfHour);
+
+        // Define currentSlot (Fix for ReferenceError)
+        const currentSlot = slotCells[slotIndex];
 
         const indicator = document.createElement('div');
         indicator.className = 'current-time-indicator';
