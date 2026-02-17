@@ -31,7 +31,7 @@ window.onerror = function (msg, url, line, col, error) {
 
 (function () {
     // State
-    const APP_VERSION = 'v1.85';
+    const APP_VERSION = 'v1.86';
 
     // IMMEDIATE LAYOUT FORCE
     function forceImmediateLayout() {
