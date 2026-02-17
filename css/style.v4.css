@@ -1525,6 +1525,7 @@ body {
 }
 
 .time-block-fill {
-    animation: blockEntry 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    /* Animation removed to prevent flashing */
+    /* animation: blockEntry 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); */
     transform-origin: center center;
 }
