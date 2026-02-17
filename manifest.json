@@ -1,5 +1,6 @@
 {
     "name": "Timeboxing",
+    "version": "1.66",
     "short_name": "Timeboxing",
     "description": "Denní plánování s Google Calendar integrací",
     "lang": "cs",
