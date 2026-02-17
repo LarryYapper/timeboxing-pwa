@@ -1440,17 +1440,91 @@ body {
         padding: 1px 4px;
     }
 
-    .block-notes {
-        display: none;
-        /* Hide notes on mobile to save space? Or just trunc */
+    /* Hide notes on mobile to save space? Or just trunc */
+}
+
+/* ====================================
+   ANIMATIONS
+   ==================================== */
+
+/* Preview Fill for Drag/Resize */
+.preview-fill {
+    background-color: var(--preview-color, rgba(255, 255, 255, 0.2)) !important;
+    opacity: 0.5;
+    position: relative;
+    /* Ensure it shows over empty slots */
+}
+
+.preview-fill::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border: 2px dashed var(--preview-color, rgba(255, 255, 255, 0.5));
+    border-radius: 4px;
+}
+
+/* Block Entry Animation */
+@keyframes blockEntry {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
     }
 
-    /* FORCE SHOW GOOGLE LOGIN */
-    .header-actions {
-        display: flex !important;
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.time-block-fill {
+    animation: blockEntry 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform-origin: center center;
+}
+
+/* FORCE SHOW GOOGLE LOGIN */
+.header-actions {
+    display: flex !important;
+}
+
+#google-signin-btn {
+    display: inline-flex !important;
+}
+}
+
+/* ====================================
+   ANIMATIONS
+   ==================================== */
+
+/* Preview Fill for Drag/Resize */
+.preview-fill {
+    background-color: var(--preview-color, rgba(255, 255, 255, 0.2)) !important;
+    opacity: 0.5;
+    position: relative;
+    /* Ensure it shows over empty slots */
+}
+
+.preview-fill::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border: 2px dashed var(--preview-color, rgba(255, 255, 255, 0.5));
+    border-radius: 4px;
+}
+
+/* Block Entry Animation */
+@keyframes blockEntry {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
     }
 
-    #google-signin-btn {
-        display: inline-flex !important;
+    to {
+        opacity: 1;
+        transform: scale(1);
     }
+}
+
+.time-block-fill {
+    animation: blockEntry 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform-origin: center center;
 }

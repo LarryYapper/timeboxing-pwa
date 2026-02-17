@@ -521,6 +521,10 @@ const TimeBlocks = (function () {
     function clearDragHighlights() {
         if (!gridElement) return;
         gridElement.querySelectorAll('.drag-over').forEach(s => s.classList.remove('drag-over'));
+        gridElement.querySelectorAll('.preview-fill').forEach(s => {
+            s.classList.remove('preview-fill');
+            s.style.removeProperty('--preview-color');
+        });
     }
 
     function getSlotAtPosition(x, y) {
@@ -660,9 +664,46 @@ const TimeBlocks = (function () {
         document.body.style.cursor = 'ew-resize';
 
         const onResizeMove = (moveEvent) => {
-            // Optional: Visual feedback during move?
-            // For now, we just rely on cursor and final drop.
-            // Maybe add a class to the hovered slot?
+            const targetSlot = getSlotAtPosition(moveEvent.clientX, moveEvent.clientY);
+
+            if (targetSlot && targetSlot.dataset.time) {
+                const currentSlotTime = targetSlot.dataset.time;
+                const currentSlotIdx = timeToSlotIndex(currentSlotTime);
+
+                let previewStartIdx, previewEndIdx;
+                const blockStartIdx = timeToSlotIndex(block.startTime);
+                const blockEndIdx = timeToSlotIndex(block.endTime);
+
+                if (type === 'end') {
+                    // Modifying End Time
+                    // New End Index is the START of the target slot + 1 (since end time is exclusive/end-of-slot)
+                    const newEndIdx = currentSlotIdx + 1;
+
+                    if (newEndIdx > blockStartIdx) {
+                        previewStartIdx = blockStartIdx;
+                        previewEndIdx = newEndIdx;
+                    } else {
+                        // User dragged end handle before start handle -> Invalid state usually, 
+                        // but let's just clamp or highlight 1 slot
+                        previewStartIdx = blockStartIdx;
+                        previewEndIdx = blockStartIdx + 1;
+                    }
+                } else {
+                    // Modifying Start Time
+                    // New Start Index is the START of the target slot
+                    const newStartIdx = currentSlotIdx;
+
+                    if (newStartIdx < blockEndIdx) {
+                        previewStartIdx = newStartIdx;
+                        previewEndIdx = blockEndIdx;
+                    } else {
+                        previewStartIdx = blockEndIdx - 1;
+                        previewEndIdx = blockEndIdx;
+                    }
+                }
+
+                highlightBlockRange(previewStartIdx, previewEndIdx, block.category);
+            }
         };
 
         const onResizeUp = (upEvent) => {
@@ -670,6 +711,7 @@ const TimeBlocks = (function () {
             document.removeEventListener('pointerup', onResizeUp);
             document.body.style.cursor = '';
             el.classList.remove('resizing');
+            clearDragHighlights(); // Clear previews
 
             // Find slot under cursor
             const targetSlot = getSlotAtPosition(upEvent.clientX, upEvent.clientY);
@@ -718,6 +760,36 @@ const TimeBlocks = (function () {
 
         document.addEventListener('pointermove', onResizeMove);
         document.addEventListener('pointerup', onResizeUp);
+    }
+
+    /**
+     * Highlight a range of slots (visual preview)
+     */
+    function highlightBlockRange(startIdx, endIdx, category) {
+        clearDragHighlights();
+
+        // Loop from startIdx (inclusive) to endIdx (exclusive)
+        // e.g. 14:00 (idx 10) to 14:30 (idx 12) -> highlight 10 and 11
+        for (let i = startIdx; i < endIdx; i++) {
+            const timeStr = slotIndexToTime(i);
+            // We need to find the element. Since we don't map idx->el directly, allow query.
+            // Optimization: Cache this? No, query is fast enough for interaction usually.
+            // Note: timeStr "HH:mm" matches data-time.
+            if (!gridElement) break;
+
+            // We need to handle slots that are rendered?
+            // Actually, slotIndexToTime returns the time for that slot.
+            // Query for it.
+            const slots = gridElement.querySelectorAll(`.time-slot[data-time="${timeStr}"]`);
+            slots.forEach(slot => {
+                slot.classList.add('preview-fill');
+                // Apply category color via variable? Or just generic highlight?
+                // Generic is safer for contrast, but colored is nicer.
+                // Let's rely on CSS and maybe set a var.
+                const color = getCategoryColor(category);
+                slot.style.setProperty('--preview-color', color);
+            });
+        }
     }
 
 
