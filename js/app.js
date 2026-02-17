@@ -31,7 +31,7 @@ window.onerror = function (msg, url, line, col, error) {
 
 (function () {
     // State
-    const APP_VERSION = 'v1.81';
+    const APP_VERSION = 'v1.82';
 
     // IMMEDIATE LAYOUT FORCE
     function forceImmediateLayout() {
@@ -1821,48 +1821,29 @@ window.onerror = function (msg, url, line, col, error) {
             return; // Not visible yet
         }
 
-        // Clean up previous highlights
+        // Clean up previous highlights AND indicators
         elements.timegrid.querySelectorAll('.time-label.current-hour-label')
             .forEach(el => el.classList.remove('current-hour-label'));
+
+        elements.timegrid.querySelectorAll('.current-time-indicator')
+            .forEach(el => el.remove());
 
         // Highlight current label
         const currentLabel = currentRow.querySelector('.time-label');
         if (currentLabel) currentLabel.classList.add('current-hour-label');
 
-        // Calculate position within the row
-        // NEW LOGIC: Percentage based on total available width for slots
-        // The row contains a label (fixed width) and 4 slots.
-        // We want the indicator to be positioned relative to the *slots area*.
-        // But `currentRow` includes the label.
-        // Let's position relative to the First Slot, but use percentage of the total slot width.
-        // Total slots width = Row Width - Label Width.
-        // Or simpler: The indicator should be a child of the Row, but we calculate `left` as:
-        // LabelWidth + (Minutes/60 * (RowWidth - LabelWidth))
-
-        // Even simpler:
-        // Position it relative to the row.
-        // Left = LabelWidth + (Minutes/60 * (TotalWidth - LabelWidth))
-
-        // CONSTANT Label Width: 50px (defined in CSS).
-        // Let's verify if label width changes.
-        const label = currentRow.querySelector('.time-label');
-        const labelWidth = label ? label.offsetWidth : 50;
-
-        // Available width for time slots
-        const totalWidth = currentRow.offsetWidth;
-        const slotsWidth = totalWidth - labelWidth;
-
-        // Percent of the hour passed
-        const percentOfHour = minutes / 60;
-
-        const leftPosition = labelWidth + (slotsWidth * percentOfHour);
-
-        // Define missing variables
+        // NEW LOGIC v1.82: Position relative to the *current slot*
         const slotIndex = Math.floor(minutes / 15);
         const minutesInSlot = minutes % 15;
 
         // Define currentSlot (Fix for ReferenceError)
         const currentSlot = slotCells[slotIndex];
+
+        // offsetLeft is relative to the row (flex container)
+        // 14 mins = (14/15) * slotWidth + slotLeft
+        const slotLeft = currentSlot.offsetLeft;
+        const slotWidth = currentSlot.offsetWidth;
+        const leftPosition = slotLeft + (slotWidth * (minutesInSlot / 15));
 
         const indicator = document.createElement('div');
         indicator.className = 'current-time-indicator';
