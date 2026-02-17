@@ -31,7 +31,7 @@ window.onerror = function (msg, url, line, col, error) {
 
 (function () {
     // State
-    const APP_VERSION = 'v1.75';
+    const APP_VERSION = 'v1.76';
 
     // IMMEDIATE LAYOUT FORCE
     function forceImmediateLayout() {
@@ -1875,38 +1875,36 @@ window.onerror = function (msg, url, line, col, error) {
         const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
         indicator.setAttribute('data-time', timeString);
 
+        indicator.setAttribute('data-time', timeString);
+
         // Check for underlying block to switch contrast
-        // Blocks are typically .time-block-fill inside the slot
-        // Check for underlying block to switch contrast
-        // Blocks are typically .time-block-fill inside the slot
-        // currentSlot is already defined above
-        const hasBlock = currentSlot.querySelector('.time-block-fill') || currentSlot.classList.contains('has-block');
+        const hasBlock = currentSlot && (currentSlot.querySelector('.time-block-fill') || currentSlot.classList.contains('has-block'));
 
         if (hasBlock) {
             indicator.classList.add('contrast-mode');
         }
 
         // Logic to flip block title if time is "above" (obscuring) it
-        // The title is only in the first cell of the block.
-        // If currentSlot HAS a .block-title, we are in the first cell.
-        const blockFill = currentSlot.querySelector('.time-block-fill');
-        if (blockFill) {
-            const titleEl = blockFill.querySelector('.block-title');
-            if (titleEl) {
-                // If we are in the first 0-10 minutes of the slot (Left side), move title to Right
-                // If we are past 10 minutes (Right side), keep/move title to Left
-                if (minutesInSlot < 11) {
-                    blockFill.style.justifyContent = 'flex-end';
-                    blockFill.style.textAlign = 'right'; // For text alignment
-                    // Remove right margin, add left margin
-                    titleEl.style.marginRight = '0';
-                    titleEl.style.marginLeft = 'var(--spacing-xs)';
-                } else {
-                    // Reset to default
-                    blockFill.style.justifyContent = 'flex-start';
-                    blockFill.style.textAlign = 'left';
-                    titleEl.style.marginRight = 'var(--spacing-xs)';
-                    titleEl.style.marginLeft = '0';
+        if (currentSlot) {
+            const blockFill = currentSlot.querySelector('.time-block-fill');
+            if (blockFill) {
+                const titleEl = blockFill.querySelector('.block-title');
+                if (titleEl) {
+                    // If we are in the first 0-10 minutes of the slot (Left side), move title to Right
+                    // If we are past 10 minutes (Right side), keep/move title to Left
+                    if (minutesInSlot < 11) {
+                        blockFill.style.justifyContent = 'flex-end';
+                        blockFill.style.textAlign = 'right'; // For text alignment
+                        // Remove right margin, add left margin
+                        titleEl.style.marginRight = '0';
+                        titleEl.style.marginLeft = 'var(--spacing-xs)';
+                    } else {
+                        // Reset to default
+                        blockFill.style.justifyContent = 'flex-start';
+                        blockFill.style.textAlign = 'left';
+                        titleEl.style.marginRight = 'var(--spacing-xs)';
+                        titleEl.style.marginLeft = '0';
+                    }
                 }
             }
         }
