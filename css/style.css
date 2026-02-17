@@ -773,6 +773,12 @@ body {
     z-index: 20;
 }
 
+.time-block-fill.selected {
+    z-index: 30 !important;
+    box-shadow: 0 0 0 2px white, 0 0 0 4px var(--color-primary);
+    opacity: 1 !important;
+}
+
 /* Routine styling for fills */
 .time-block-fill.is-routine .block-title {
     font-family: var(--font-family-serif);

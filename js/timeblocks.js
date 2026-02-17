@@ -280,6 +280,13 @@ const TimeBlocks = (function () {
                     makeDraggable(fill, block);
                 }
 
+                // Double Click handler
+                fill.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault(); // Prevent text selection
+                    handleBlockDoubleClick(block.id);
+                });
+
                 cell.appendChild(fill);
             }
 
@@ -317,6 +324,16 @@ const TimeBlocks = (function () {
      */
     function handleBlockClick(blockId) {
         const event = new CustomEvent('blockClicked', {
+            detail: { blockId }
+        });
+        document.dispatchEvent(event);
+    }
+
+    /**
+     * Handle block double click
+     */
+    function handleBlockDoubleClick(blockId) {
+        const event = new CustomEvent('blockDoubleClicked', {
             detail: { blockId }
         });
         document.dispatchEvent(event);

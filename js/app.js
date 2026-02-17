@@ -107,6 +107,7 @@ window.onerror = function (msg, url, line, col, error) {
     let localBlocks = [];
     let calendarBlocks = [];
     let editingBlockId = null;
+    let selectedBlockId = null; // New state for keyboard selection
 
     // User Task Palette
     const TASK_PALETTE = [
@@ -510,17 +511,38 @@ window.onerror = function (msg, url, line, col, error) {
 
         // Close popover on outside click
         document.addEventListener('click', (e) => {
+            // 1. All Day Popover
             const popover = document.getElementById('all-day-popover');
             if (popover && popover.style.display === 'flex') {
                 if (!popover.contains(e.target) && (!elements.allDayBtn || !elements.allDayBtn.contains(e.target))) {
                     popover.style.display = 'none';
                 }
             }
+
+            // 2. Smart Input Container - Close if clicked outside
+            // We must allow clicks on:
+            // - The container itself (obviously)
+            // - The Header Add Button (opens it)
+            // - Time Slots (they populate it)
+            // - "Q" key is handled separately
+            if (elements.smartInputContainer && elements.smartInputContainer.style.display !== 'none') {
+                const clickedInContainer = elements.smartInputContainer.contains(e.target);
+                const clickedAddBtn = e.target.closest('#add-block-btn-header');
+                const clickedTimeSlot = e.target.closest('.time-slot');
+
+                // Also check if we are clicking the "Add" button inside the container (already covered by contain check, but safety)
+
+                if (!clickedInContainer && !clickedAddBtn && !clickedTimeSlot) {
+                    elements.smartInputContainer.style.display = 'none';
+                }
+            }
         });
 
         // Block events
         document.addEventListener('blockMoved', handleBlockMoved);
-        document.addEventListener('blockClicked', handleBlockClicked);
+        document.addEventListener('blockMoved', handleBlockMoved);
+        document.addEventListener('blockClicked', handleBlockClick);
+        document.addEventListener('blockDoubleClicked', handleBlockDoubleClick);
 
         // Modal events
         elements.blockForm.addEventListener('submit', handleBlockFormSubmit);
@@ -538,8 +560,42 @@ window.onerror = function (msg, url, line, col, error) {
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !elements.blockModal.hidden) {
-                closeModal();
+            // ESC: Close modal or Deselect block
+            if (e.key === 'Escape') {
+                if (!elements.blockModal.hidden) {
+                    closeModal();
+                } else if (elements.smartInputContainer.style.display !== 'none') {
+                    elements.smartInputContainer.style.display = 'none';
+                } else if (selectedBlockId) {
+                    // Deselect block
+                    deselectBlock();
+                }
+            }
+
+            // ENTER: Open modal for selected block
+            if (e.key === 'Enter' && selectedBlockId && elements.blockModal.hidden) {
+                e.preventDefault();
+                const block = blocks.find(b => b.id === selectedBlockId);
+                if (block) openModal(block);
+            }
+
+            // DELETE: Delete selected block
+            if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBlockId && elements.blockModal.hidden && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                if (confirm('Opravdu smazat vybraný blok?')) {
+                    handleDeleteBlock(selectedBlockId); // Ensure this function handles ID arg
+                }
+            }
+
+            // RESIZING SHORTCUTS
+            if (selectedBlockId && elements.blockModal.hidden) {
+                const isShift = e.shiftKey;
+                const isAlt = e.altKey;
+
+                if (e.key.startsWith('Arrow')) {
+                    e.preventDefault();
+                    handleKeyboardResize(selectedBlockId, e.key, isShift, isAlt);
+                }
             }
         });
 
@@ -568,6 +624,9 @@ window.onerror = function (msg, url, line, col, error) {
             elements.timegrid.addEventListener('click', (e) => {
                 // Ignore if clicked on a block (handled by block click listener)
                 if (e.target.closest('.time-block-fill')) return;
+
+                // Deselect if clicking on empty space
+                deselectBlock();
 
                 const slot = e.target.closest('.time-slot');
                 if (slot) {
@@ -601,7 +660,7 @@ window.onerror = function (msg, url, line, col, error) {
         window.addEventListener('focus', () => {
             if (Calendar.getSignedInStatus()) {
                 console.log('Window focused, checking for updates...');
-                syncFromDrive();
+                syncFromDrive(); // Re-enabled for PC
             }
         });
 
@@ -1364,16 +1423,137 @@ window.onerror = function (msg, url, line, col, error) {
     }
 
     /**
-     * Handle block clicked event
+     * Handle block click - SELECTS the block
      */
-    function handleBlockClicked(e) {
-        const { blockId } = e.detail;
+    function handleBlockClick(e) {
+        const blockId = e.detail.blockId;
+        const block = blocks.find(b => b.id === blockId);
+
+        if (block) {
+            selectBlock(blockId);
+        }
+    }
+
+    /**
+     * Handle block double click - EDITS the block
+     */
+    function handleBlockDoubleClick(e) {
+        const blockId = e.detail.blockId;
         const block = blocks.find(b => b.id === blockId);
 
         if (block) {
             openModal(block);
         }
     }
+
+    /**
+     * Select a block
+     */
+    function selectBlock(blockId) {
+        if (selectedBlockId === blockId) return;
+
+        // Deselect previous
+        if (selectedBlockId) {
+            const prev = document.querySelectorAll(`.time-block-fill[data-block-id="${selectedBlockId}"]`);
+            prev.forEach(el => el.classList.remove('selected'));
+        }
+
+        selectedBlockId = blockId;
+
+        // Select new
+        const current = document.querySelectorAll(`.time-block-fill[data-block-id="${selectedBlockId}"]`);
+        current.forEach(el => el.classList.add('selected'));
+    }
+
+    /**
+     * Deselect current block
+     */
+    function deselectBlock() {
+        if (selectedBlockId) {
+            const prev = document.querySelectorAll(`.time-block-fill[data-block-id="${selectedBlockId}"]`);
+            prev.forEach(el => el.classList.remove('selected'));
+            selectedBlockId = null;
+        }
+    }
+
+    /**
+     * Handle keyboard resizing
+     */
+    async function handleKeyboardResize(blockId, key, isShift, isAlt) {
+        const block = blocks.find(b => b.id === blockId);
+        if (!block) return;
+
+        // Cannot resize calendar events/routines typically (or let's restrict to local blocks for safety unless user wants all)
+        if (block.fromCalendar) {
+            alert('Nelze měnit události z kalendáře.');
+            return;
+        }
+
+        let newStartTime = block.startTime;
+        let newEndTime = block.endTime;
+
+        const startIdx = TimeBlocks.timeToSlotIndex(block.startTime);
+        const endIdx = TimeBlocks.timeToSlotIndex(block.endTime);
+
+        if (isShift) {
+            // SHIFT + ARROWS = Modify END time
+            if (key === 'ArrowRight') {
+                // Extend End
+                const newEndIdx = Math.min(TimeBlocks.TOTAL_SLOTS, endIdx + 1);
+                newEndTime = TimeBlocks.slotIndexToTime(newEndIdx);
+            } else if (key === 'ArrowLeft') {
+                // Shorten End
+                const newEndIdx = Math.max(startIdx + 1, endIdx - 1); // Min 1 slot
+                newEndTime = TimeBlocks.slotIndexToTime(newEndIdx);
+            }
+        } else if (isAlt) {
+            // ALT + ARROWS = Modify START time
+            if (key === 'ArrowLeft') {
+                // Extend Start (Earlier)
+                const newStartIdx = Math.max(0, startIdx - 1);
+                newStartTime = TimeBlocks.slotIndexToTime(newStartIdx);
+            } else if (key === 'ArrowRight') {
+                // Shorten Start (Later)
+                const newStartIdx = Math.min(endIdx - 1, startIdx + 1); // Max 1 slot before end
+                newStartTime = TimeBlocks.slotIndexToTime(newStartIdx);
+            }
+        } else {
+            // Just arrows -> Move block? Optional. For now do nothing.
+            // Maybe implement move 15m later/earlier?
+            return;
+        }
+
+        if (newStartTime !== block.startTime || newEndTime !== block.endTime) {
+            // Update Block
+            block.startTime = newStartTime;
+            block.endTime = newEndTime;
+
+            // Re-render
+            await Storage.saveBlock(block);
+            await loadDate(currentDate);
+
+            // Re-select because re-render wipes DOM
+            // We need to wait for render... loadDate does that.
+            // But we need to ensure the DOM is ready.
+            setTimeout(() => {
+                selectBlock(blockId);
+            }, 50);
+        }
+    }
+
+    /**
+     * Handle block click - Opens modal (LEGACY - Replaced by Selection)
+     */
+
+
+    /**
+     * Handle block click - Opens modal (LEGACY - Replaced by Selection)
+     */
+    /*
+    function handleBlockClicked(e) {
+        openModal(e.detail.blockId);
+    }
+    */
 
     /**
      * Handle click on empty time slot -> Open Add Modal
