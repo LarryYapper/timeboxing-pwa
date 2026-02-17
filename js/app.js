@@ -31,7 +31,7 @@ window.onerror = function (msg, url, line, col, error) {
 
 (function () {
     // State
-    const APP_VERSION = 'v1.83';
+    const APP_VERSION = 'v1.84';
 
     // IMMEDIATE LAYOUT FORCE
     function forceImmediateLayout() {
@@ -1832,16 +1832,9 @@ window.onerror = function (msg, url, line, col, error) {
         const currentLabel = currentRow.querySelector('.time-label');
         if (currentLabel) currentLabel.classList.add('current-hour-label');
 
-        // NEW LOGIC v1.82: Position relative to the *current slot*
-        const slotIndex = Math.floor(minutes / 15);
-        const minutesInSlot = minutes % 15;
-
-        // Define currentSlot (Fix for ReferenceError)
-        const currentSlot = slotCells[slotIndex];
-
         // NEW LOGIC v1.83: Position relative to the *current slot* with sub-minute precision
         // And CENTER the indicator so the line itself aligns exactly with the time.
-        const now = new Date();
+        // 'now' is already defined above
         const seconds = now.getSeconds();
         const totalMinutesInSlot = (minutes % 15) + (seconds / 60);
 
