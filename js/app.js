@@ -31,7 +31,7 @@ window.onerror = function (msg, url, line, col, error) {
 
 (function () {
     // State
-    const APP_VERSION = 'v1.70';
+    const APP_VERSION = 'v1.71';
 
     // IMMEDIATE LAYOUT FORCE
     function forceImmediateLayout() {
@@ -1834,20 +1834,25 @@ window.onerror = function (msg, url, line, col, error) {
         const minutesInSlot = minutes % 15;
         const percentInSlot = minutesInSlot / 15;
 
-        // CRITICAL FIX: The row contains a Label + 4 Slots.
-        // We want the position RELATIVE TO THE ROW.
-        // Steps:
-        // 1. Get width of the Label (first child)
-        // 2. Add (slotIndex * cellWidth)
-        // 3. Add (percentInSlot * cellWidth)
+        // CRITICAL FIX: Use offsetLeft for precise positioning relative to the row
+        // This avoids accumulation errors from manual width summation and handles padding/label width automatically.
 
-        let labelWidth = 50; // Default fallback
-        if (currentLabel) {
-            labelWidth = currentLabel.offsetWidth || 50;
-        }
+        const currentSlot = slotCells[slotIndex];
+        if (!currentSlot) return;
 
-        // Left position = Label Width + (Slot Index * Cell Width) + (Percent * Cell Width)
-        const leftPosition = labelWidth + (slotIndex * cellWidth) + (percentInSlot * cellWidth);
+        // Use getBoundingClientRect for sub-pixel precision on width
+        const rect = currentSlot.getBoundingClientRect();
+        const preciseWidth = rect.width;
+
+        // Calculate left position relative to the row
+        // offsetLeft gives the distance from the left edge of the closest positioned ancestor (the row, since we set it to relative below)
+        // BUT we strictly set row to relative later. We must ensure it IS relative now or offsetParent might be body.
+        currentRow.style.position = 'relative';
+
+        const leftPosition = currentSlot.offsetLeft + (percentInSlot * preciseWidth);
+
+        // Debug
+        // console.log(`DEBUG: Slot ${slotIndex}, Offset: ${currentSlot.offsetLeft}, Width: ${preciseWidth}, Left: ${leftPosition}`);
 
         const indicator = document.createElement('div');
         indicator.className = 'current-time-indicator';
@@ -1862,7 +1867,9 @@ window.onerror = function (msg, url, line, col, error) {
 
         // Check for underlying block to switch contrast
         // Blocks are typically .time-block-fill inside the slot
-        const currentSlot = slotCells[slotIndex];
+        // Check for underlying block to switch contrast
+        // Blocks are typically .time-block-fill inside the slot
+        // currentSlot is already defined above
         const hasBlock = currentSlot.querySelector('.time-block-fill') || currentSlot.classList.contains('has-block');
 
         if (hasBlock) {

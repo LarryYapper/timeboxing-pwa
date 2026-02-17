@@ -187,6 +187,9 @@ body {
 html {
     font-size: 16px;
     -webkit-text-size-adjust: 100%;
+    height: 100%;
+    height: 100dvh;
+    /* Force full dynamic height */
 }
 
 body {
@@ -195,15 +198,15 @@ body {
     line-height: 1.5;
     color: var(--color-text);
     background: var(--color-bg);
-    height: 100vh;
+    height: 100%;
     height: 100dvh;
     /* Dynamic viewport height */
     overflow: hidden;
     /* Disable global scrolling */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    position: fixed;
-    /* Lock body in place */
+    position: relative;
+    /* Changed from fixed to relative to avoid some mobile view bugs */
     width: 100%;
 }
 
