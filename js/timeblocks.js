@@ -279,9 +279,15 @@ const TimeBlocks = (function () {
                 if (!block.fromCalendar) {
                     makeDraggable(fill, block);
 
-                    // Add resize handle to the LAST cell of the block (or if it's a single cell)
+                    // RESIZE HANDLES
+                    // 1. Start Handle (Left)
+                    if (currentHour === startPos.hour && i === startPos.slot) {
+                        makeResizable(fill, block, 'start');
+                    }
+
+                    // 2. End Handle (Right)
                     if (currentHour === endPos.hour && i === endSlot - 1) {
-                        makeResizable(fill, block);
+                        makeResizable(fill, block, 'end');
                     }
                     // Also if we break early (endPos.slot == 0) - wait, looping logic handles i < endSlot.
                     // If block ends at 14:15, startSlot=0, endSlot=1. i=0. i === endSlot-1 (0 === 0) -> TRUE.
