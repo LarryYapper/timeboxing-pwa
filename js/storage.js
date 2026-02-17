@@ -212,13 +212,51 @@ const Storage = (function () {
             const settingsStore = transaction.objectStore(STORE_SETTINGS);
 
             if (overwrite) {
+                // "Overwrite" mode (full restore) - Dangerous if we want to merge? 
+                // Actually, existing code used current local data to MERGE with remote, then called importBackup(merged, true).
+                // So if we are called with overwrite=true from app.js sync logic, it means "Apply this state".
+                // But app.js logic constructed the state. 
+                // Let's modify app.js logic instead?
+                // Wait. importBackup here just dumps data.
+
                 blocksStore.clear();
                 settingsStore.clear();
-            }
 
-            data.blocks.forEach(block => blocksStore.put(block));
-            if (data.settings) {
-                data.settings.forEach(setting => settingsStore.put(setting));
+                data.blocks.forEach(block => blocksStore.put(block));
+                if (data.settings) {
+                    data.settings.forEach(setting => settingsStore.put(setting));
+                }
+            } else {
+                // MERGE MODE (overwrite=false)
+                // This is where "Smart Merge" happens if we just want to ingest remote data.
+                // iterate remote blocks
+                data.blocks.forEach(remoteBlock => {
+                    const request = blocksStore.get(remoteBlock.id);
+                    request.onsuccess = () => {
+                        const localBlock = request.result;
+                        if (localBlock) {
+                            // Conflict: Check timestamps
+                            const localTime = localBlock.updatedAt ? new Date(localBlock.updatedAt).getTime() : 0;
+                            const remoteTime = remoteBlock.updatedAt ? new Date(remoteBlock.updatedAt).getTime() : 0;
+
+                            if (remoteTime >= localTime) {
+                                // Remote is newer or equal -> Overwrite
+                                blocksStore.put(remoteBlock);
+                            } else {
+                                // Local is newer -> Keep local (Skip put)
+                                console.log(`Keeping local newer block: ${localBlock.title} (${localBlock.updatedAt} vs ${remoteBlock.updatedAt})`);
+                            }
+                        } else {
+                            // New block from remote -> Add
+                            blocksStore.put(remoteBlock);
+                        }
+                    };
+                });
+
+                // Settings - blindly overwrite or check?
+                if (data.settings) {
+                    data.settings.forEach(setting => settingsStore.put(setting));
+                }
             }
 
             // Restore hidden routines to localStorage

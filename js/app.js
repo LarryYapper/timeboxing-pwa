@@ -31,7 +31,7 @@ window.onerror = function (msg, url, line, col, error) {
 
 (function () {
     // State
-    const APP_VERSION = 'v1.67';
+    const APP_VERSION = 'v1.68';
 
     // IMMEDIATE LAYOUT FORCE
     function forceImmediateLayout() {
@@ -718,8 +718,9 @@ window.onerror = function (msg, url, line, col, error) {
         try {
             const remoteData = await Calendar.loadData();
             if (remoteData) {
+                // Use smart merge (overwrite=false) which now checks timestamps
                 await Storage.importBackup(remoteData, false);
-                console.log('Synced from Drive (Merged)');
+                console.log('Synced from Drive (Smart Merge)');
                 await loadDate(currentDate);
                 showSyncStatus(`Synced`, 'success');
                 return remoteData; // RETURN DATA
@@ -953,10 +954,34 @@ window.onerror = function (msg, url, line, col, error) {
             } else {
                 // Blocks Merge
                 const blockMap = new Map();
-                // Add Remote first
-                if (remoteData.blocks) remoteData.blocks.forEach(b => blockMap.set(b.id, b));
-                // Overlay Local (Local Wins on conflict)
-                if (localData.blocks) localData.blocks.forEach(b => blockMap.set(b.id, b));
+
+                // 1. Add Remote blocks first
+                if (remoteData.blocks) {
+                    remoteData.blocks.forEach(b => blockMap.set(b.id, b));
+                }
+
+                // 2. Overlay Local blocks, but ONLY if they are newer
+                if (localData.blocks) {
+                    localData.blocks.forEach(localBlock => {
+                        const remoteBlock = blockMap.get(localBlock.id);
+                        if (remoteBlock) {
+                            // Conflict: Compare timestamps
+                            const localTime = localBlock.updatedAt ? new Date(localBlock.updatedAt).getTime() : 0;
+                            const remoteTime = remoteBlock.updatedAt ? new Date(remoteBlock.updatedAt).getTime() : 0;
+
+                            if (localTime >= remoteTime) {
+                                // Local is newer -> Overwrite Remote in map
+                                blockMap.set(localBlock.id, localBlock);
+                            } else {
+                                // Remote is newer -> Keep Remote (do nothing)
+                                console.log(`Sync: Keeping newer remote block ${localBlock.title}`);
+                            }
+                        } else {
+                            // Local block not in remote -> Add it (New local block)
+                            blockMap.set(localBlock.id, localBlock);
+                        }
+                    });
+                }
                 mergedBlocks = Array.from(blockMap.values());
 
                 // Settings Merge (Local Wins)
@@ -1362,6 +1387,7 @@ window.onerror = function (msg, url, line, col, error) {
             endTime: parsed.endTime,
             category: parsed.category,
             fromCalendar: false,
+            updatedAt: new Date().toISOString(), // ADDED: Timestamp
             // Assign random color for tasks (work category)
             customColor: parsed.category === 'work' ? TASK_PALETTE[Math.floor(Math.random() * TASK_PALETTE.length)] : null
         };
@@ -1404,6 +1430,7 @@ window.onerror = function (msg, url, line, col, error) {
                 endTime: endTime,
                 category: block.category,
                 notes: block.notes || '',
+                updatedAt: new Date().toISOString(), // ADDED: Timestamp
                 fromCalendar: false
             };
             await Storage.saveBlock(newBlock);
@@ -1416,6 +1443,7 @@ window.onerror = function (msg, url, line, col, error) {
         // Regular block - just update
         block.startTime = startTime;
         block.endTime = endTime;
+        block.updatedAt = new Date().toISOString(); // ADDED: Timestamp for sync
 
         await Storage.saveBlock(block);
         await loadDate(currentDate);
@@ -1673,6 +1701,7 @@ window.onerror = function (msg, url, line, col, error) {
                 endTime: elements.blockEnd.value,
                 notes: elements.blockNotes.value,
                 category: block.category,
+                updatedAt: new Date().toISOString(), // ADDED: Timestamp
                 fromCalendar: false
             };
             const selectedCategory = elements.categoryPicker.querySelector('.category-btn.selected');
@@ -1692,10 +1721,10 @@ window.onerror = function (msg, url, line, col, error) {
         block.endTime = elements.blockEnd.value;
         block.notes = elements.blockNotes.value;
 
-        const selectedCategory = elements.categoryPicker.querySelector('.category-btn.selected');
         if (selectedCategory) {
             block.category = selectedCategory.dataset.category;
         }
+        block.updatedAt = new Date().toISOString(); // ADDED: Timestamp
 
         await Storage.saveBlock(block);
         renderBlocks();
