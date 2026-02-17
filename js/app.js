@@ -31,7 +31,7 @@ window.onerror = function (msg, url, line, col, error) {
 
 (function () {
     // State
-    const APP_VERSION = 'v1.84';
+    const APP_VERSION = 'v1.85';
 
     // IMMEDIATE LAYOUT FORCE
     function forceImmediateLayout() {
@@ -1835,6 +1835,12 @@ window.onerror = function (msg, url, line, col, error) {
         // NEW LOGIC v1.83: Position relative to the *current slot* with sub-minute precision
         // And CENTER the indicator so the line itself aligns exactly with the time.
         // 'now' is already defined above
+
+        // Restore missing definitions (v1.85)
+        const slotIndex = Math.floor(minutes / 15);
+        if (!slotCells[slotIndex]) return; // Safety check
+        const currentSlot = slotCells[slotIndex];
+
         const seconds = now.getSeconds();
         const totalMinutesInSlot = (minutes % 15) + (seconds / 60);
 
