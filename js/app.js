@@ -31,7 +31,7 @@ window.onerror = function (msg, url, line, col, error) {
 
 (function () {
     // State
-    const APP_VERSION = 'v1.79';
+    const APP_VERSION = 'v1.80';
 
     // IMMEDIATE LAYOUT FORCE
     function forceImmediateLayout() {
@@ -1856,6 +1856,10 @@ window.onerror = function (msg, url, line, col, error) {
         const percentOfHour = minutes / 60;
 
         const leftPosition = labelWidth + (slotsWidth * percentOfHour);
+
+        // Define missing variables
+        const slotIndex = Math.floor(minutes / 15);
+        const minutesInSlot = minutes % 15;
 
         // Define currentSlot (Fix for ReferenceError)
         const currentSlot = slotCells[slotIndex];
