@@ -31,7 +31,7 @@ window.onerror = function (msg, url, line, col, error) {
 
 (function () {
     // State
-    const APP_VERSION = 'v1.87';
+    const APP_VERSION = 'v1.88';
 
     // IMMEDIATE LAYOUT FORCE
     function forceImmediateLayout() {
@@ -1842,20 +1842,38 @@ window.onerror = function (msg, url, line, col, error) {
         const currentSlot = slotCells[slotIndex];
 
         const seconds = now.getSeconds();
-        const totalMinutesInSlot = (minutes % 15) + (seconds / 60);
+        // NEW LOGIC v1.88: Simplified & Independent Calculation
+        // Redefining time variables to ensure no scope pollution.
+        const d = new Date();
+        const m = d.getMinutes();
+        const s = d.getSeconds();
 
-        // offsetLeft is relative to the row (flex container)
-        // Calculate exact pixel position
-        const slotLeft = currentSlot.offsetLeft;
-        const slotWidth = currentSlot.offsetWidth;
-        const leftPosition = slotLeft + (slotWidth * (totalMinutesInSlot / 15));
+        // 1. Identify Slot
+        const sIdx = Math.floor(m / 15);
+        if (!slotCells[sIdx]) return;
+        const cSlot = slotCells[sIdx];
+
+        // 2. Calculate Progress (0.0 - 1.0)
+        const minsInSlot = (m % 15) + (s / 60);
+        let pct = minsInSlot / 15;
+
+        // Clamp
+        pct = Math.max(0, Math.min(1, pct));
+
+        console.log(`DEBUG TimeIndicator: ${hours}:${m}:${s} -> Slot:${sIdx} Mins:${minsInSlot.toFixed(2)} Pct:${pct.toFixed(2)}`);
+
+        // 3. Position
+        // offsetLeft relative to currentRow
+        const sLeft = cSlot.offsetLeft;
+        const sWidth = cSlot.offsetWidth;
+        const lPos = sLeft + (sWidth * pct);
 
         const indicator = document.createElement('div');
         indicator.className = 'current-time-indicator';
 
         // Center the 4px line on the exact time
         indicator.style.transform = 'translateX(-50%)';
-        indicator.style.left = `${leftPosition}px`;
+        indicator.style.left = `${lPos}px`;
 
         // Ensure row is relative so absolute positioning works
         currentRow.style.position = 'relative';
