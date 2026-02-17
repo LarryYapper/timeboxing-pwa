@@ -31,7 +31,7 @@ window.onerror = function (msg, url, line, col, error) {
 
 (function () {
     // State
-    const APP_VERSION = 'v1.77';
+    const APP_VERSION = 'v1.78';
 
     // IMMEDIATE LAYOUT FORCE
     function forceImmediateLayout() {
@@ -1878,7 +1878,7 @@ window.onerror = function (msg, url, line, col, error) {
         const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
         indicator.setAttribute('data-time', timeString);
 
-        indicator.setAttribute('data-time', timeString);
+
 
         // Check for underlying block to switch contrast
         const hasBlock = currentSlot && (currentSlot.querySelector('.time-block-fill') || currentSlot.classList.contains('has-block'));
