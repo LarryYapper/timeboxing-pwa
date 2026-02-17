@@ -76,27 +76,30 @@ const TimeBlocks = (function () {
     /**
      * Render all blocks into the grid cells
      */
+    /**
+     * Render all blocks into the grid cells using efficient diffing to prevent flash
+     */
     function render(blocks) {
         if (!gridElement) return;
         currentBlocks = blocks;
 
-        // Clear all existing block content from cells
-        const allSlots = gridElement.querySelectorAll('.time-slot');
-        allSlots.forEach(slot => {
-            slot.innerHTML = '';
-            slot.classList.remove('has-block', 'block-start', 'block-middle', 'block-end');
-            slot.removeAttribute('data-block-id');
-            slot.removeAttribute('data-category');
-            slot.style.backgroundColor = '';
-        });
+        // 1. Calculate desired state for all slots
+        // Map: slotIndex (0-63) -> Array of BlockRenderData
+        const desiredState = new Map();
 
-        // Assign Google Calendar colors to calendar events
+        // Helper to add data to state
+        const addToState = (slotIndex, data) => {
+            if (!desiredState.has(slotIndex)) {
+                desiredState.set(slotIndex, []);
+            }
+            desiredState.get(slotIndex).push(data);
+        };
+
+        // Assign Colors & Lanes
         assignCalendarColors(blocks);
-
-        // Compute overlap lanes before rendering
         const lanes = computeOverlapLanes(blocks);
 
-        // Sort: routines/calendar first, then user tasks
+        // Sort blocks
         const sortedBlocks = [...blocks].sort((a, b) => {
             const aWeight = (a.isRoutine || a.fromCalendar) ? 0 : 1;
             const bWeight = (b.isRoutine || b.fromCalendar) ? 0 : 1;
@@ -104,9 +107,82 @@ const TimeBlocks = (function () {
             return a.startTime.localeCompare(b.startTime);
         });
 
-        // Place each block with lane info
+        // 2. Populate desired state
         sortedBlocks.forEach(block => {
-            placeBlockInCells(block, lanes[block.id]);
+            calculateBlockCells(block, lanes[block.id], addToState);
+        });
+
+        // 3. Apply changes to DOM (Diffing)
+        const allSlots = gridElement.querySelectorAll('.time-slot');
+
+        // We iterate through ALL slots to ensure we clear ones that should be empty
+        // and update ones that should be occupied.
+        // Slots are ordered in DOM? Yes. But safer to look them up or iterate grid.
+        // Assuming allSlots are in order? They typically are. 
+        // But let's rely on data-hour and index if possible, or just iterate and check data attributes.
+
+        // Actually, easiest valid iteration is just looping all physically present slots.
+        // But we need to know their slotIndex.
+        // Let's compute slotIndex from element data.
+
+        allSlots.forEach(slot => {
+            // content editable? No, slots are containers.
+            const hour = parseInt(slot.parentElement.dataset.hour, 10);
+
+            // Find slot index within hour
+            // The slot doesn't have an index data attr by default, but we can infer from children order?
+            // Or easier: use data-time if available?
+            // Existing code doesn't set data-time on all slots perhaps?
+            // Wait, existing code: `slotIndexToTime`... `render` clears all...
+            // Let's ensure we can identify the slot.
+            // slot.dataset.time SHOULD be there.
+
+            const timeStr = slot.dataset.time; // e.g. "07:00"
+            if (!timeStr) return; // Should not happen
+
+            const slotIdx = timeToSlotIndex(timeStr);
+            const newContent = desiredState.get(slotIdx) || [];
+
+            // Generate a signature for comparison
+            // Signature: length + combined IDs + combined styles
+            const newSignature = JSON.stringify(newContent.map(i => ({ i: i.block.id, l: i.laneInfo, f: i.isFirst })));
+            const currentSignature = slot.dataset.renderSignature || '';
+
+            if (newSignature !== currentSignature) {
+                // UPDATE NEEDED
+                slot.innerHTML = '';
+                slot.className = 'time-slot'; // Reset classes
+                slot.removeAttribute('data-block-id');
+                slot.removeAttribute('data-category');
+                slot.style.backgroundColor = '';
+
+                // If empty now, we are done
+                if (newContent.length === 0) {
+                    slot.dataset.renderSignature = '';
+                    return;
+                }
+
+                // Render new content
+                // Note: If multiple blocks overlap, we typically only mark has-block for the one that dominates?
+                // Or we mark has-block if ANY exists.
+                slot.classList.add('has-block');
+
+                // Set data-block-id to the first one? Or last?
+                // Visuals usually depend on the filled divs.
+                // The dataset.blockId on the slot itself might be used for click targeting if we click empty space?
+                // But click on fill handles fill click.
+                // Let's set it to the last added (topmost) for now, or comma separated?
+                // Previous code: `cell.dataset.blockId = block.id` inside a loop. Last one wins.
+                slot.dataset.blockId = newContent[newContent.length - 1].block.id;
+                slot.dataset.category = newContent[newContent.length - 1].block.category;
+
+                newContent.forEach(item => {
+                    const fill = createBlockFill(item.block, item.laneInfo, item.isFirst, item.currentHour, item.slotInHour);
+                    slot.appendChild(fill);
+                });
+
+                slot.dataset.renderSignature = newSignature;
+            }
         });
     }
 
@@ -196,10 +272,9 @@ const TimeBlocks = (function () {
     }
 
     /**
-     * Place a block into grid cells using per-cell fills.
-     * Each cell gets its own fill div - NO cross-cell overflow.
+     * Calculate which cells a block occupies and add to state
      */
-    function placeBlockInCells(block, laneInfo) {
+    function calculateBlockCells(block, laneInfo, addToState) {
         const startPos = getTimePosition(block.startTime);
         const endPos = getTimePosition(block.endTime);
         let currentHour = startPos.hour;
@@ -213,103 +288,132 @@ const TimeBlocks = (function () {
 
             if (currentHour === endPos.hour && endPos.slot === 0) break;
 
-            const row = gridElement.querySelector(`[data-hour="${currentHour}"]`);
-            if (!row) { currentHour++; continue; }
-
-            const slotCells = row.querySelectorAll('.time-slot');
-
             for (let i = startSlot; i < endSlot; i++) {
-                const cell = slotCells[i];
-                if (!cell) continue;
+                // Calculate absolute slot index
+                const slotIndex = (currentHour - GRID_START_HOUR) * SLOTS_PER_HOUR + i;
 
-                cell.classList.add('has-block');
-                cell.dataset.blockId = block.id;
-                cell.dataset.category = block.category;
-
-                // Create a fill element for THIS cell
-                const fill = document.createElement('div');
-                fill.className = 'time-block-fill';
-                if (block.fromCalendar) fill.classList.add('from-calendar');
-                if (block.isRoutine) fill.classList.add('is-routine');
-                // Set colors
-                let bgColor;
-                if (block.fromCalendar) {
-                    bgColor = block.backgroundColor || block._calColor || '#588AEE';
-                } else {
-                    bgColor = getBlockBackgroundColor(block);
-                }
-
-                fill.style.backgroundColor = bgColor;
-                const textColor = block.fromCalendar ? '#fff' : getTextColorForCategory(block.category, bgColor);
-                fill.style.color = textColor;
-
-                // For routines, add .light-bg if text is dark (implies light background)
-                if (block.isRoutine && textColor === '#1a1a1a') {
-                    fill.classList.add('light-bg');
-                }
-
-                if (block.fromCalendar) {
-                    fill.style.fontFamily = "'Space Grotesk', sans-serif";
-                    fill.style.fontWeight = '700';
-                }
-                fill.dataset.blockId = block.id;
-
-                // Lane positioning for overlaps
-                if (laneInfo && laneInfo.totalLanes > 1) {
-                    const heightPer = 100 / laneInfo.totalLanes;
-                    fill.style.height = heightPer + '%';
-                    fill.style.top = (laneInfo.lane * heightPer) + '%';
-                }
-
-                // Show title only on the first cell
-                if (isFirstCell) {
-                    const notesHtml = block.notes ? `<span class="block-notes">${escapeHtml(block.notes)}</span>` : '';
-                    fill.innerHTML = `<span class="block-title">${escapeHtml(block.title)}</span>${notesHtml}`;
-                    fill.style.zIndex = '10'; // Above neighboring fills so title overflows visibly
-                    isFirstCell = false;
-                }
-
-                // Click handler
-                fill.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (fill.hasAttribute('data-has-dragged')) {
-                        return; // Ignore click after drag
-                    }
-                    handleBlockClick(block.id);
+                addToState(slotIndex, {
+                    block: block,
+                    laneInfo: laneInfo,
+                    isFirst: isFirstCell,
+                    currentHour: currentHour,
+                    slotInHour: i
                 });
 
-                // Draggable for user tasks and routines (not calendar events)
-                if (!block.fromCalendar) {
-                    makeDraggable(fill, block);
-
-                    // RESIZE HANDLES
-                    // 1. Start Handle (Left)
-                    if (currentHour === startPos.hour && i === startPos.slot) {
-                        makeResizable(fill, block, 'start');
-                    }
-
-                    // 2. End Handle (Right)
-                    if (currentHour === endPos.hour && i === endSlot - 1) {
-                        makeResizable(fill, block, 'end');
-                    }
-                    // Also if we break early (endPos.slot == 0) - wait, looping logic handles i < endSlot.
-                    // If block ends at 14:15, startSlot=0, endSlot=1. i=0. i === endSlot-1 (0 === 0) -> TRUE.
-                    // If block ends at 14:30, endSlot=2. i=0, i=1. i==1 -> TRUE.
-                    // Correct.
-                }
-
-                // Double Click handler
-                fill.addEventListener('dblclick', (e) => {
-                    e.stopPropagation();
-                    e.preventDefault(); // Prevent text selection
-                    handleBlockDoubleClick(block.id);
-                });
-
-                cell.appendChild(fill);
+                isFirstCell = false;
             }
-
             currentHour++;
         }
+    }
+
+    /**
+     * Create the fill element (DOM) for a block in a specific cell
+     */
+    function createBlockFill(block, laneInfo, isFirstCell, currentHour, i) {
+        // Create a fill element for THIS cell
+        const fill = document.createElement('div');
+        fill.className = 'time-block-fill';
+        if (block.fromCalendar) fill.classList.add('from-calendar');
+        if (block.isRoutine) fill.classList.add('is-routine');
+
+        // Set colors
+        let bgColor;
+        if (block.fromCalendar) {
+            bgColor = block.backgroundColor || block._calColor || '#588AEE';
+        } else {
+            bgColor = getBlockBackgroundColor(block);
+        }
+
+        fill.style.backgroundColor = bgColor;
+        const textColor = block.fromCalendar ? '#fff' : getTextColorForCategory(block.category, bgColor);
+        fill.style.color = textColor;
+
+        // For routines, add .light-bg if text is dark (implies light background)
+        if (block.isRoutine && textColor === '#1a1a1a') {
+            fill.classList.add('light-bg');
+        }
+
+        if (block.fromCalendar) {
+            fill.style.fontFamily = "'Space Grotesk', sans-serif";
+            fill.style.fontWeight = '700';
+        }
+        fill.dataset.blockId = block.id;
+
+        // Lane positioning for overlaps
+        if (laneInfo && laneInfo.totalLanes > 1) {
+            const heightPer = 100 / laneInfo.totalLanes;
+            fill.style.height = heightPer + '%';
+            fill.style.top = (laneInfo.lane * heightPer) + '%';
+        }
+
+        // Show title only on the first cell
+        if (isFirstCell) {
+            const notesHtml = block.notes ? `<span class="block-notes">${escapeHtml(block.notes)}</span>` : '';
+            fill.innerHTML = `<span class="block-title">${escapeHtml(block.title)}</span>${notesHtml}`;
+            fill.style.zIndex = '10'; // Above neighboring fills so title overflows visibly
+        }
+
+        // Click handler
+        fill.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (fill.hasAttribute('data-has-dragged')) {
+                return; // Ignore click after drag
+            }
+            handleBlockClick(block.id);
+        });
+
+        // Draggable for user tasks and routines (not calendar events)
+        if (!block.fromCalendar) {
+            makeDraggable(fill, block);
+
+            // RESIZE HANDLES
+            // Re-calculate start/end slot for handle placement logic
+            // We need to know if this specific 'i' and 'currentHour' is the start or end of the *block*
+            const startPos = getTimePosition(block.startTime);
+            const endPos = getTimePosition(block.endTime);
+            // endPos is exclusive. 
+            // End handle should be on the last occupied slot.
+            // If block is 14:00 - 14:30. Start=14:00. End=14:30.
+            // Slots: 14:00 (i=0), 14:15 (i=1).
+            // Start Handle: Hour==StartHour && i==StartSlot (14, 0).
+            // End Handle: Hour==EndHour && i==EndSlot-1 ?? 
+            // Wait, if End is 14:30. EndPos=(14, 2). EndSlot=2. Last occupied is 1.
+            // If block ends at hour boundary, e.g. 15:00. EndPos=(15, 0).
+            // The loop condition `currentHour < endPos.hour` or `i < endSlot` handles occupancy.
+            // The LAST rendered cell is what we want.
+
+            // Start Handle
+            if (currentHour === startPos.hour && i === startPos.slot) {
+                makeResizable(fill, block, 'start');
+            }
+
+            // End Handle
+            // Check if this is the very last slot of the block
+            // Logic: Is this (currentHour, i) the one immediately before (endPos.hour, endPos.slot)?
+
+            // Calculate next slot time
+            const nextSlotI = i + 1;
+            let nextSlotHour = currentHour;
+            let checkSlot = nextSlotI;
+
+            if (checkSlot >= SLOTS_PER_HOUR) {
+                checkSlot = 0;
+                nextSlotHour++;
+            }
+
+            if (nextSlotHour === endPos.hour && checkSlot === endPos.slot) {
+                makeResizable(fill, block, 'end');
+            }
+        }
+
+        // Double Click handler
+        fill.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            e.preventDefault(); // Prevent text selection
+            handleBlockDoubleClick(block.id);
+        });
+
+        return fill;
     }
 
     /**
