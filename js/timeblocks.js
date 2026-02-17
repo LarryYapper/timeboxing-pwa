@@ -629,50 +629,34 @@ const TimeBlocks = (function () {
 
     let resizeState = null;
 
-    function makeResizable(el, block) {
+    function makeResizable(el, block, type) {
         const handle = document.createElement('div');
-        handle.className = 'resize-handle';
+        handle.className = `resize-handle ${type}`; // 'start' or 'end'
         el.appendChild(handle);
 
-        handle.addEventListener('pointerdown', (e) => onResizeStart(e, block, el));
+        handle.addEventListener('pointerdown', (e) => onResizeStart(e, block, el, type));
         // Stop propagation to prevent drag start
         handle.addEventListener('mousedown', (e) => e.stopPropagation());
     }
 
-    function onResizeStart(e, block, el) {
+    function onResizeStart(e, block, el, type) {
         e.preventDefault();
         e.stopPropagation();
 
         if (e.button !== 0) return;
 
-        const startY = e.clientY;
-        const startHeight = el.offsetHeight;
-        const startEndTime = block.endTime;
+        console.log(`Resize Start: ${type}, Block: ${block.title}`);
 
-        resizeState = {
-            blockId: block.id,
-            block: block,
-            originalEndTime: block.endTime,
-            element: el
-        };
+        const startX = e.clientX;
 
+        // Visual feedback
         el.classList.add('resizing');
-        document.body.style.cursor = 'ns-resize';
+        document.body.style.cursor = 'ew-resize';
 
         const onResizeMove = (moveEvent) => {
-            const dy = moveEvent.clientY - startY;
-            // Snap logic happens here visualization-wise? 
-            // Or we just update the ghost?
-            // Actually, we should probably update the block visually or a ghost.
-            // For simplicity, let's just calculate the new time and dispatch events on UP, 
-            // but show visual feedback.
-
-            // Visual feedback: stretch the element locally?
-            // Only if it's the last segment (which it is, handles only on last typically?)
-            // Wait, we need to handle multi-segment blocks.
-            // If we resize the last segment, it's fine.
-            el.style.height = (startHeight + dy) + 'px';
-            el.style.zIndex = '100';
+            // Optional: Visual feedback during move?
+            // For now, we just rely on cursor and final drop.
+            // Maybe add a class to the hovered slot?
         };
 
         const onResizeUp = (upEvent) => {
@@ -680,36 +664,25 @@ const TimeBlocks = (function () {
             document.removeEventListener('pointerup', onResizeUp);
             document.body.style.cursor = '';
             el.classList.remove('resizing');
-            el.style.height = ''; // Reset, let grid render handle it
-            el.style.zIndex = '';
 
-            // Calculate new End Time based on drop position
             // Find slot under cursor
             const targetSlot = getSlotAtPosition(upEvent.clientX, upEvent.clientY);
 
-            if (targetSlot) {
-                // Determine if we snapped to the end of this slot or start?
-                // Usually snapping to the END of the slot (xx:15, xx:30) is intuitive if dragging down.
-                // Let's rely on the slot's time. 
-                // Slot time is the START of the slot (e.g. 14:00).
-                // If we drag to 14:00 slot, and we are resizing DOWN, we probably mean 14:15 end?
-                // Or if we drag upwards...
-
-                // Let's just use the slot's time as the TARGET END SLOT?
-                // No, slot time is start.
-                // If I drag to 14:00 slot, I want it to end at 14:15 (filling that slot).
-
+            if (targetSlot && targetSlot.dataset.time) {
                 const slotTime = targetSlot.dataset.time;
-                if (slotTime) {
-                    const slotIdx = timeToSlotIndex(slotTime);
-                    // End Time should be End of this slot -> slotIdx + 1
-                    // BUT max is total slots.
+                const slotIdx = timeToSlotIndex(slotTime);
 
+                // Snap to 15m intervals (which is what slots are)
+
+                if (type === 'end') {
+                    // Dragging END handle
+                    // If we drop on 14:00 slot, we want end time to be 14:15 (end of that slot)
                     const newEndIdx = slotIdx + 1;
                     const newEndTime = slotIndexToTime(newEndIdx);
 
-                    // Validate: End > Start
+                    // Logic: EndTime must be > StartTime
                     if (newEndTime > block.startTime) {
+                        // Also check if we are not hitting the very max
                         document.dispatchEvent(new CustomEvent('blockMoved', {
                             detail: {
                                 blockId: block.id,
@@ -718,10 +691,23 @@ const TimeBlocks = (function () {
                             }
                         }));
                     }
+                } else if (type === 'start') {
+                    // Dragging START handle
+                    // If we drop on 14:00 slot, start time is 14:00 (start of that slot)
+                    const newStartTime = slotTime;
+
+                    // Logic: StartTime must be < EndTime
+                    if (newStartTime < block.endTime) {
+                        document.dispatchEvent(new CustomEvent('blockMoved', {
+                            detail: {
+                                blockId: block.id,
+                                startTime: newStartTime,
+                                endTime: block.endTime
+                            }
+                        }));
+                    }
                 }
             }
-
-            resizeState = null;
         };
 
         document.addEventListener('pointermove', onResizeMove);

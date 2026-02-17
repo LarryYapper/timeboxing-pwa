@@ -1328,42 +1328,52 @@ body {
    ==================================== */
 .resize-handle {
     position: absolute;
+    top: 0;
     bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 8px;
+    width: 10px;
     /* Hit area */
-    cursor: ns-resize;
-    z-index: 25;
-    /* Above content */
+    z-index: 30;
+    cursor: ew-resize;
+    /* East-West resize */
     display: none;
     /* Hidden by default */
 }
 
-/* Show handle on hover (if device supports hover) */
-@media (hover: hover) {
-    .time-block-fill:hover .resize-handle {
-        display: block;
-    }
+/* Left handle (Start Time) */
+.resize-handle.start {
+    left: 0;
 }
 
-/* Handle visual */
+/* Right handle (End Time) */
+.resize-handle.end {
+    right: 0;
+}
+
+/* Visual Indicator (Vertical Line) */
 .resize-handle::after {
     content: '';
     position: absolute;
-    bottom: 2px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    width: 20px;
-    height: 3px;
-    background-color: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    width: 3px;
+    height: 16px;
+    /* Vertical pill */
+    background-color: rgba(255, 255, 255, 0.6);
     border-radius: 2px;
 }
 
 /* Dark text blocks need dark handle */
 .time-block-fill[style*="rgb(26, 26, 26)"] .resize-handle::after,
 .time-block-fill[style*="#1a1a1a"] .resize-handle::after {
-    background-color: rgba(0, 0, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Show on hover */
+@media (hover: hover) {
+    .time-block-fill:hover .resize-handle {
+        display: block;
+    }
 }
 
 /* ====================================
